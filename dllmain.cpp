@@ -14,10 +14,12 @@ namespace
 
     int gml_Script_savestateSlot;
     int gml_Script_modifyFps;
+    int gml_game_load;
 
     int g_savestateSlot;
     int g_changeSpeed;
 
+    bool g_inRunloop;
     bool g_isQuitting;
     bool g_isPaused;
     bool g_isFrameAdvancing;
@@ -90,7 +92,7 @@ namespace
                 arg[0].val = g_isSaving;
                 arg[0].kind = VALUE_BOOL;
                 arg[1].val = g_savestateSlot;
-                Script_Perform(gml_Script_savestateSlot, g_selfinst, nullptr, 2, &result, arg);
+                Script_Perform(gml_Script_savestateSlot, g_selfinst, g_selfinst, 2, &result, arg);
                 FREE_RValue(&result);
                 g_savestateSlot = 0;
             }
@@ -102,7 +104,7 @@ namespace
                 arg[0].val = g_resetSpeed;
                 arg[0].kind = VALUE_BOOL;
                 arg[1].val = g_changeSpeed;
-                Script_Perform(gml_Script_modifyFps, g_selfinst, nullptr, 2, &result, arg);
+                Script_Perform(gml_Script_modifyFps, g_selfinst, g_selfinst, 2, &result, arg);
                 FREE_RValue(&result);
                 g_resetSpeed = false;
                 g_changeSpeed = 0;
@@ -112,6 +114,7 @@ namespace
 
     int Runloop()
     {
+        g_inRunloop = true;
         PerformActions();
         while (g_isPaused && !g_isQuitting && !g_isFrameAdvancing)
         {
@@ -120,6 +123,7 @@ namespace
             MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLINPUT);
         }
         g_isFrameAdvancing = false;
+        g_inRunloop = false;
 
         return ((decltype(&Runloop))g_origRunloop)();
     }
@@ -167,6 +171,13 @@ YYEXPORT void ct_update(RValue& result, CInstance* selfinst, CInstance* otherins
 {
     if (!g_selfinst)
     {
+        Code_Function_Find("game_load", &gml_game_load);
+        if (gml_game_load == -1)
+        {
+            YYError("Failed to find game_load!");
+            return;
+        }
+
         gml_Script_savestateSlot = Script_Find_Id("gml_Script_savestateSlot");
         if (gml_Script_savestateSlot == -1)
         {
@@ -194,4 +205,22 @@ YYEXPORT void ct_is_paused(RValue& result, CInstance* selfinst, CInstance* other
 {
     result.val = g_isPaused;
     result.kind = VALUE_BOOL;
+}
+
+YYEXPORT void ct_in_runloop(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    result.val = g_inRunloop;
+    result.kind = VALUE_BOOL;
+}
+
+YYEXPORT void ct_output_debug_string(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    OutputDebugStringA(arg->GetString());
+}
+
+YYEXPORT void ct_game_load(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    Script_Perform(gml_game_load, g_selfinst, g_selfinst, argc, &result, arg);
+
+    ((int(*)())0x1401c1f40)(); // this function actually loads the save file
 }
