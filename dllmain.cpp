@@ -112,6 +112,11 @@ namespace
         }
     }
 
+    void RefreshScreen()
+    {
+        ((decltype(&RefreshScreen))0x140009540)(); // this seems to be the function that refreshes the screen
+    }
+
     int Runloop()
     {
         g_inRunloop = true;
@@ -120,7 +125,8 @@ namespace
         {
             ((void (*)())0x140716c50)(); // poll message queue
             PerformActions();
-            MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLINPUT);
+            MsgWaitForMultipleObjects(0, nullptr, FALSE, 16, QS_ALLINPUT);
+            RefreshScreen(); // so that the steam overlay still works while paused
         }
         g_isFrameAdvancing = false;
         g_inRunloop = false;
@@ -198,7 +204,7 @@ YYEXPORT void ct_update(RValue& result, CInstance* selfinst, CInstance* otherins
 
 YYEXPORT void ct_refresh_screen(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
-    ((void (*)())0x140009540)(); // this seems to be the function that refreshes the screen
+    RefreshScreen();
 }
 
 YYEXPORT void ct_is_paused(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
@@ -220,7 +226,7 @@ YYEXPORT void ct_output_debug_string(RValue& result, CInstance* selfinst, CInsta
 
 YYEXPORT void ct_game_load(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
-    Script_Perform(gml_game_load, g_selfinst, g_selfinst, argc, &result, arg);
+    Script_Perform(gml_game_load, selfinst, otherinst, argc, &result, arg);
 
     ((int(*)())0x1401c1f40)(); // this function actually loads the save file
 }
