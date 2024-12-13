@@ -119,14 +119,26 @@ namespace
 
     int Runloop()
     {
+        DWORD lastRefreshTime = timeGetTime();
+
         g_inRunloop = true;
         PerformActions();
         while (g_isPaused && !g_isQuitting && !g_isFrameAdvancing)
         {
             ((void (*)())0x140716c50)(); // poll message queue
             PerformActions();
-            MsgWaitForMultipleObjects(0, nullptr, FALSE, 16, QS_ALLINPUT);
-            RefreshScreen(); // so that the steam overlay still works while paused
+
+            DWORD time = timeGetTime();
+            DWORD timeSinceLastRefresh = time - lastRefreshTime;
+            if (timeSinceLastRefresh >= 16)
+            {
+                lastRefreshTime = time;
+                RefreshScreen(); // so that the steam overlay still works while paused
+            }
+            else
+            {
+                MsgWaitForMultipleObjects(0, nullptr, FALSE, 16 - timeSinceLastRefresh, QS_ALLINPUT);
+            }
         }
         g_isFrameAdvancing = false;
         g_inRunloop = false;
