@@ -11,9 +11,11 @@ namespace
 
     void* g_origRunloop;
     void* g_origWndproc;
+    void* g_origCheckAudioGroupsLoaded;
 
     int gml_Script_savestateSlot;
     int gml_Script_modifyFps;
+    int gml_Script_incrementFrame;
     int gml_game_load;
 
     int g_savestateSlot;
@@ -39,6 +41,7 @@ namespace
                 if (GetKeyState(VK_CONTROL) < 0)
                 {
                     g_isPaused = false;
+                    g_isFrameAdvancing = true;
                 }
                 else if (g_isPaused)
                 {
@@ -97,7 +100,7 @@ namespace
                 g_savestateSlot = 0;
             }
 
-            if (g_resetSpeed || g_changeSpeed)
+            if (g_resetSpeed || g_changeSpeed || g_isFrameAdvancing)
             {
                 RValue result = {};
                 RValue arg[2] = {};
@@ -122,6 +125,7 @@ namespace
         DWORD lastRefreshTime = timeGetTime();
 
         g_inRunloop = true;
+
         PerformActions();
         while (g_isPaused && !g_isQuitting && !g_isFrameAdvancing)
         {
@@ -141,9 +145,44 @@ namespace
             }
         }
         g_isFrameAdvancing = false;
+
+        if (g_selfinst)
+        {
+            RValue result = {};
+            Script_Perform(gml_Script_incrementFrame, g_selfinst, g_selfinst, 0, &result, nullptr);
+            FREE_RValue(&result);
+        }
+
         g_inRunloop = false;
 
         return ((decltype(&Runloop))g_origRunloop)();
+    }
+
+    void CheckAudioGroupsLoaded(intptr_t arg)
+    {
+        struct Group
+        {
+            Group* next;
+            intptr_t unk1;
+            intptr_t something;
+            intptr_t val;
+        };
+
+        // wait until all loading audio groups have finished loading (happens in a worker thread)
+        // this essentially makes audio group loading synchronous and prevents desyncs
+        auto a = *(Group**)(arg + 8);
+        for (auto g = a->next; g != a; g = g->next)
+        {
+            if (g->val != 0 && g->something != 0 && *(int*)g->val == 1)
+            {
+                while (*(bool*)(g->val + 0x11) == 0)
+                {
+                    MsgWaitForMultipleObjects(0, nullptr, FALSE, 1, 0);
+                }
+            }
+        }
+
+        ((decltype(&CheckAudioGroupsLoaded))g_origCheckAudioGroupsLoaded)(arg);
     }
 }
 
@@ -176,10 +215,22 @@ YYEXPORT void YYExtensionInitialise(const struct YYRunnerInterface* _pFunctions,
         return;
     }
 
+    if (MH_CreateHook((void*)0x14083b400, &CheckAudioGroupsLoaded, &g_origCheckAudioGroupsLoaded) != MH_OK)
+    {
+        YYError("MH_CreateHook CheckAudioGroupsLoaded failed!");
+        return;
+    }
+
     if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK)
     {
         YYError("MH_EnableHook failed!");
         return;
+    }
+
+    // start the game paused if you launch the game while holding space   
+    if (GetKeyState(VK_SPACE) < 0)
+    {
+        g_isPaused = true;
     }
 
     DebugConsoleOutput("CoffeeTools YYExtensionInitialise CONFIGURED\n");
@@ -207,6 +258,13 @@ YYEXPORT void ct_update(RValue& result, CInstance* selfinst, CInstance* otherins
         if (gml_Script_modifyFps == -1)
         {
             YYError("Failed to find gml_Script_modifyFps!");
+            return;
+        }
+
+        gml_Script_incrementFrame = Script_Find_Id("gml_Script_incrementFrame");
+        if (gml_Script_incrementFrame == -1)
+        {
+            YYError("Failed to find gml_Script_incrementFrame!");
             return;
         }
     }
