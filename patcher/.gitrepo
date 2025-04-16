@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:p-sam/ufo50-patcher.git
+	branch = develop
+	commit = e7f0b57fb49309dc1fd4ac061eccfbf5b22f49a4
+	parent = 10027d3c807f111d5f633729da7f724dec4492f7
+	method = merge
+	cmdver = 0.4.9
