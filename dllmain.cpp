@@ -1,21 +1,38 @@
 #include "framework.h"
 #include "minhook/include/MinHook.h"
+
+#define __YYDEFINE_EXTENSION_FUNCTIONS__
+#include "Extension_Interface.h"
+#include "Ref.h"
 #include "YYRValue.h"
+#define YYEXPORT __declspec(dllexport)
 
 YYRunnerInterface* g_pYYRunnerInterface;
 
 namespace
 {
+    constexpr char c_ExtensionName[] = "CoffeeTools";
+    constexpr char c_ExtensionVersion[] = "1.3.1";
+
+    constexpr size_t c_exe_run_loop = 0x1401ceca0;
+    constexpr size_t c_exe_wndproc = 0x1400d6f00;
+    constexpr size_t c_exe_poll_messages = 0x14071e2f0;
+    constexpr size_t c_exe_refresh_screen = 0x140009640;
+    constexpr size_t c_exe_check_audio_groups_loaded = 0x140840790;
+    constexpr size_t c_exe_update_texture_status = 0x14010d3b0;
+    constexpr size_t c_exe_perform_game_load = 0x1401c8be0;
+
     YYRunnerInterface g_runnerInterface;
     CInstance* g_selfinst;
 
     void* g_origRunloop;
     void* g_origWndproc;
     void* g_origCheckAudioGroupsLoaded;
+    void* g_origUpdateTextureStatus;
 
-    int gml_Script_savestateSlot;
-    int gml_Script_modifyFps;
     int gml_Script_incrementFrame;
+    int gml_Script_performActions;
+    int gml_Script_refreshScreen;
     int gml_game_load;
 
     int g_savestateSlot;
@@ -28,17 +45,47 @@ namespace
     bool g_isSaving;
     bool g_resetSpeed;
 
+    bool g_prevInput[256];
+    bool g_input[256];
+
     LRESULT Wndproc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         if (message == WM_QUIT || message == WM_CLOSE)
         {
             g_isQuitting = true;
         }
-        else if (message == WM_KEYDOWN)
+
+        return ((decltype(&Wndproc))g_origWndproc)(hwnd, message, wParam, lParam);
+    }
+
+    void PerformActions()
+    {
+        memcpy(g_prevInput, g_input, sizeof(g_input));
+
+        if (GetActiveWindow())
         {
-            if (wParam == VK_SPACE)
+            for (int i = 0; i < ARRAYSIZE(g_input); i++)
             {
-                if (GetKeyState(VK_CONTROL) < 0)
+                g_input[i] = GetKeyState(i) < 0;
+            }
+        }
+        else
+        {
+            memset(g_input, 0, sizeof(g_input));
+        }
+
+        if (g_selfinst)
+        {
+            RValue result = {};
+            Script_Perform(gml_Script_performActions, g_selfinst, g_selfinst, 0, &result, nullptr);
+            FREE_RValue(&result);
+        }
+        else
+        {
+            // handle input when the game first launches before performAction takes over (hold space when running the game to start paused)
+            if (g_input[VK_SPACE] && !g_prevInput[VK_SPACE])
+            {
+                if (g_input[VK_CONTROL])
                 {
                     g_isPaused = false;
                     g_isFrameAdvancing = true;
@@ -52,97 +99,53 @@ namespace
                     g_isPaused = true;
                 }
             }
-            else if (wParam == VK_BACK)
+            else if (g_input[VK_BACK] && !g_prevInput[VK_BACK])
             {
-                if (((lParam >> 16) & KF_REPEAT) == 0)
-                {
-                    if (g_isPaused)
-                    {
-                        g_isPaused = false;
-                    }
-                    else
-                    {
-                        g_resetSpeed = true;
-                        g_changeSpeed = 0;
-                    }
-                }
-            }
-            else if (wParam == VK_OEM_MINUS || wParam == VK_OEM_PLUS)
-            { 
-                g_changeSpeed = wParam == VK_OEM_PLUS ? 1 : -1;
-            }
-            else if (wParam >= '0' && wParam <= '9')
-            {
-                if (((lParam >> 16) & KF_REPEAT) == 0)
-                {
-                    g_savestateSlot = wParam == '0' ? 10 : (int)wParam - '0';
-                    g_isSaving = GetKeyState(VK_SHIFT) < 0;
-                }
-            }
-        }
-
-        return ((decltype(&Wndproc))g_origWndproc)(hwnd, message, wParam, lParam);
-    }
-
-    void PerformActions()
-    {
-        if (g_selfinst)
-        {
-            if (g_savestateSlot)
-            {
-                RValue result = {};
-                RValue arg[2] = {};
-                arg[0].val = g_isSaving;
-                arg[0].kind = VALUE_BOOL;
-                arg[1].val = g_savestateSlot;
-                Script_Perform(gml_Script_savestateSlot, g_selfinst, g_selfinst, 2, &result, arg);
-                FREE_RValue(&result);
-                g_savestateSlot = 0;
-            }
-
-            if (g_resetSpeed || g_changeSpeed || g_isFrameAdvancing)
-            {
-                RValue result = {};
-                RValue arg[2] = {};
-                arg[0].val = g_resetSpeed;
-                arg[0].kind = VALUE_BOOL;
-                arg[1].val = g_changeSpeed;
-                Script_Perform(gml_Script_modifyFps, g_selfinst, g_selfinst, 2, &result, arg);
-                FREE_RValue(&result);
-                g_resetSpeed = false;
-                g_changeSpeed = 0;
+                g_isPaused = false;
             }
         }
     }
 
     void RefreshScreen()
     {
-        ((decltype(&RefreshScreen))0x140009540)(); // this seems to be the function that refreshes the screen
+        if (g_selfinst)
+        {
+            RValue result = {};
+            Script_Perform(gml_Script_refreshScreen, g_selfinst, g_selfinst, 0, &result, nullptr);
+            FREE_RValue(&result);
+        }
+
+        ((decltype(&RefreshScreen))c_exe_refresh_screen)();
     }
 
     int Runloop()
     {
-        DWORD lastRefreshTime = timeGetTime();
+        auto lastRefreshTime = Timing_Time();
 
         g_inRunloop = true;
 
-        PerformActions();
-        while (g_isPaused && !g_isQuitting && !g_isFrameAdvancing)
+        while (true)
         {
-            ((void (*)())0x140716c50)(); // poll message queue
             PerformActions();
 
-            DWORD time = timeGetTime();
-            DWORD timeSinceLastRefresh = time - lastRefreshTime;
-            if (timeSinceLastRefresh >= 16)
+            if (!g_isPaused || g_isQuitting || g_isFrameAdvancing)
+            {
+                break;
+            }
+
+            auto time = Timing_Time();
+            auto timeSinceLastRefresh = time - lastRefreshTime;
+            if (timeSinceLastRefresh >= 16667)
             {
                 lastRefreshTime = time;
                 RefreshScreen(); // so that the steam overlay still works while paused
             }
             else
             {
-                MsgWaitForMultipleObjects(0, nullptr, FALSE, 16 - timeSinceLastRefresh, QS_ALLINPUT);
+                Timing_Sleep(16667 - timeSinceLastRefresh);
             }
+
+            ((void (*)())c_exe_poll_messages)();
         }
         g_isFrameAdvancing = false;
 
@@ -177,12 +180,39 @@ namespace
             {
                 while (*(bool*)(g->val + 0x11) == 0)
                 {
-                    MsgWaitForMultipleObjects(0, nullptr, FALSE, 1, 0);
+                    Timing_Sleep(1000);
                 }
             }
         }
 
         ((decltype(&CheckAudioGroupsLoaded))g_origCheckAudioGroupsLoaded)(arg);
+    }
+
+    int UpdateTextureStatus(intptr_t arg1, intptr_t arg2, bool arg3)
+    {
+        // wait until the texture status has finished being updated (happens in a worker thread)
+        // (status 2 updates to status 3 in a separate thread, and then afterwards status 4 updates to status 6 in another thread)
+        // with this, we essentially make texture loading as fast as possible, since we always update our status in as few frames as possible, fixing desyncs
+        if (arg2 != 0)
+        {
+            auto status = *(int*)(arg2 + 0x3c);
+            if (status == 2 || status == 4)
+            {
+                // the function that calls this function enters us into a critical section, but we need to get out in order to let the worker thread do its thing
+                if (arg1 != 0) LeaveCriticalSection(**(LPCRITICAL_SECTION**)(arg1 + 0x50));
+
+                do
+                {
+                    Timing_Sleep(1000);
+                    status = *(int*)(arg2 + 0x3c);
+                }
+                while (status == 2 || status == 4);
+
+                if (arg1 != 0) EnterCriticalSection(**(LPCRITICAL_SECTION**)(arg1 + 0x50));
+            }
+        }
+
+        return ((decltype(&UpdateTextureStatus))g_origUpdateTextureStatus)(arg1, arg2, arg3);
     }
 }
 
@@ -197,27 +227,47 @@ YYEXPORT void YYExtensionInitialise(const struct YYRunnerInterface* _pFunctions,
     memcpy(&g_runnerInterface, _pFunctions, sizeof(YYRunnerInterface));
     g_pYYRunnerInterface = &g_runnerInterface;
 
+    auto version = extGetVersion(c_ExtensionName);
+    if (strncmp(version, c_ExtensionVersion, ARRAYSIZE(c_ExtensionVersion) - 1) != 0)
+    {
+        YYError("Extension DLL version mismatch: expected v%s but PFO-50.dll is v%s\nMake sure you copied the matching CoffeeTools.dll into the same folder as data.win.", version, c_ExtensionVersion);
+        return;
+    }
+
+    Code_Function_Find("game_load", &gml_game_load);
+    if (gml_game_load == -1)
+    {
+        YYError("Failed to find game_load!");
+        return;
+    }
+
     if (MH_Initialize() != MH_OK)
     {
         YYError("MH_Initialize failed!");
         return;
     }
 
-    if (MH_CreateHook((void*)0x1401c8090, &Runloop, &g_origRunloop) != MH_OK)
+    if (MH_CreateHook((void*)c_exe_run_loop, &Runloop, &g_origRunloop) != MH_OK)
     {
         YYError("MH_CreateHook Runloop failed!");
         return;
     }
 
-    if (MH_CreateHook((void*)0x1400d3d90, &Wndproc, &g_origWndproc) != MH_OK)
+    if (MH_CreateHook((void*)c_exe_wndproc, &Wndproc, &g_origWndproc) != MH_OK)
     {
         YYError("MH_CreateHook Wndproc failed!");
         return;
     }
 
-    if (MH_CreateHook((void*)0x14083b400, &CheckAudioGroupsLoaded, &g_origCheckAudioGroupsLoaded) != MH_OK)
+    if (MH_CreateHook((void*)c_exe_check_audio_groups_loaded, &CheckAudioGroupsLoaded, &g_origCheckAudioGroupsLoaded) != MH_OK)
     {
         YYError("MH_CreateHook CheckAudioGroupsLoaded failed!");
+        return;
+    }
+
+    if (MH_CreateHook((void*)c_exe_update_texture_status, &UpdateTextureStatus, &g_origUpdateTextureStatus) != MH_OK)
+    {
+        YYError("MH_CreateHook UpdateTextureStatus failed!");
         return;
     }
 
@@ -236,51 +286,52 @@ YYEXPORT void YYExtensionInitialise(const struct YYRunnerInterface* _pFunctions,
     DebugConsoleOutput("CoffeeTools YYExtensionInitialise CONFIGURED\n");
 }
 
-YYEXPORT void ct_update(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+YYEXPORT void ct_init(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
     if (!g_selfinst)
     {
-        Code_Function_Find("game_load", &gml_game_load);
-        if (gml_game_load == -1)
-        {
-            YYError("Failed to find game_load!");
-            return;
-        }
-
-        gml_Script_savestateSlot = Script_Find_Id("gml_Script_savestateSlot");
-        if (gml_Script_savestateSlot == -1)
-        {
-            YYError("Failed to find gml_Script_savestateSlot!");
-            return;
-        }
-
-        gml_Script_modifyFps = Script_Find_Id("gml_Script_modifyFps");
-        if (gml_Script_modifyFps == -1)
-        {
-            YYError("Failed to find gml_Script_modifyFps!");
-            return;
-        }
-
         gml_Script_incrementFrame = Script_Find_Id("gml_Script_incrementFrame");
         if (gml_Script_incrementFrame == -1)
         {
             YYError("Failed to find gml_Script_incrementFrame!");
             return;
         }
+
+        gml_Script_performActions = Script_Find_Id("gml_Script_performActions");
+        if (gml_Script_performActions == -1)
+        {
+            YYError("Failed to find gml_Script_performActions!");
+            return;
+        }
+
+        gml_Script_refreshScreen = Script_Find_Id("gml_Script_refreshScreen");
+        if (gml_Script_refreshScreen == -1)
+        {
+            YYError("Failed to find gml_Script_refreshScreen!");
+            return;
+        }
     }
 
     g_selfinst = selfinst;
-}
 
-YYEXPORT void ct_refresh_screen(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
-{
-    RefreshScreen();
+    result.val = 1;
+    result.kind = VALUE_BOOL;
 }
 
 YYEXPORT void ct_is_paused(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
     result.val = g_isPaused;
     result.kind = VALUE_BOOL;
+}
+
+YYEXPORT void ct_set_paused(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    g_isPaused = YYGetBool(arg, 0);
+
+    if (argc > 1)
+    {
+        g_isFrameAdvancing = YYGetBool(arg, 1);
+    }
 }
 
 YYEXPORT void ct_in_runloop(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
@@ -291,12 +342,51 @@ YYEXPORT void ct_in_runloop(RValue& result, CInstance* selfinst, CInstance* othe
 
 YYEXPORT void ct_output_debug_string(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
-    OutputDebugStringA(arg->GetString());
+    OutputDebugStringA(YYGetString(arg, 0));
 }
 
 YYEXPORT void ct_game_load(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
     Script_Perform(gml_game_load, selfinst, otherinst, argc, &result, arg);
 
-    ((int(*)())0x1401c1f40)(); // this function actually loads the save file
+    ((int(*)())c_exe_perform_game_load)();
+}
+
+YYEXPORT void ct_is_ref(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    result.val = arg[0].kind == VALUE_REF;
+    result.kind = VALUE_REF;
+}
+
+YYEXPORT void ct_ref_to_int64(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    result.val = arg[0].v64;
+    result.kind = VALUE_INT64;
+}
+
+YYEXPORT void ct_int64_to_ref(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    result.val = arg[0].v64;
+    result.kind = VALUE_REF;
+}
+
+YYEXPORT void ct_keyboard_check(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    int vk = YYGetInt32(arg, 0);
+    result.val = g_input[vk];
+    result.kind = VALUE_BOOL;
+}
+
+YYEXPORT void ct_keyboard_check_pressed(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    int vk = YYGetInt32(arg, 0);
+    result.val = g_input[vk] && !g_prevInput[vk];
+    result.kind = VALUE_BOOL;
+}
+
+YYEXPORT void ct_keyboard_check_released(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
+{
+    int vk = YYGetInt32(arg, 0);
+    result.val = !g_input[vk] && g_prevInput[vk];
+    result.kind = VALUE_BOOL;
 }

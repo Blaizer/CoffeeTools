@@ -1,0 +1,43 @@
+[CoffeeTools Instructions]
+----------------------------
+To install the mod, use Delta Patcher to apply the [.xdelta] patch to UFO 50's [data.win] file,
+and move CoffeeTools.dll to be in the same folder as the modified [data.win].
+
+ CONTROLS
+[F1] : Show/hide input display
+[F2] : Show/hide player 2 inputs
+[F4] : Block game saving
+[F5] : Show/hide savestate messages
+[F6] : Show/hide frame counter
+[F7] : Reset frame counter
+[F8] : Show/hide TAS frame counter
+[Number keys] : Load savestates 1-10 (Hold [Shift] to save)
+[Spacebar] : Enter Frame Advance Mode / Advance frame
+[Backspace] : Exit Frame Advance Mode / Toggle custom game speed
+[-][+] : Decrease/increase game speed
+
+ TAS RECORDING AND PLAYBACK
+- Whenever you create a savestate, a recording with all your inputs up to that point is
+  saved to a [.ctas] file. You can load earlier savestates to undo parts of the recording.
+- Once you're done recording, you can find your recorded [.ctas] file in [%localappdata%/ufo50/coffeetools].
+  For example: When playing on profile 2 and saving to slot 3, the final recording will be [savestate2-3.ctas].
+- To view a [.ctas] file, rename the file to [play.ctas] and it'll be played back when you next launch the game.
+
+ PORTING A SAVESTATE USING .CTAS PLAYBACK
+- If you try to load a savestate that was made in an older version of CoffeeTools, it likely won't work,
+  but you can still recover your progress using the [.ctas] file that was created alongside your savestate!
+- Rename the file to [play.ctas] and let UFO 50 play back the recorded inputs. (Feel free to speed it up!)
+- When all of your inputs have been played back, save the savestate and it'll now be ready to use again.
+
+
+[COFFEETOOLS v1.3.1] - for UFO 50 v1.7.6
+Created by ToastGhost and Blazier.
+
+Full source code:
+https://github.com/Blaizer/CoffeeTools/
+
+Delta Patcher download:
+https://github.com/marco-calautti/DeltaPatcher/releases
+
+Thanks to p-sam for UFO 50 Patcher:
+https://github.com/p-sam/ufo50-mods

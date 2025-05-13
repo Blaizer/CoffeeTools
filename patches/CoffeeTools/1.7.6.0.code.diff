@@ -1,0 +1,493 @@
+--- original/gml_GlobalScript_scrFFrame.gml
++++ patched/gml_GlobalScript_scrFFrame.gml
+@@ -6,5 +6,5 @@
+     }
+     var fframe = instance_create(x, y, oFFrame);
+     fframe.fSpeed = game_get_speed(gamespeed_fps);
+-    game_set_speed(arg0, gamespeed_fps);
++    game_set_speed((arg0 * global.STANDARD_FPS) / 60, gamespeed_fps);
+ }
+--- original/gml_GlobalScript_scrGetInput.gml
++++ patched/gml_GlobalScript_scrGetInput.gml
+@@ -1,10 +1,141 @@
++function applyTasInputs(arg0, arg1)
++{
++    var player = arg0;
++    var inputFrame = arg1;
++    if (inputFrame < global.CT_INPUTS_LENGTH)
++    {
++        var c = global.CT_INPUTS[inputFrame];
++        if (player == 1)
++        {
++            c = c >> UnknownEnum.Value_32;
++        }
++        holdUp = (c & UnknownEnum.Value_1) != 0;
++        pressUp = (c & UnknownEnum.Value_2) != 0;
++        releaseUp = (c & UnknownEnum.Value_4) != 0;
++        holdDown = (c & UnknownEnum.Value_8) != 0;
++        pressDown = (c & UnknownEnum.Value_16) != 0;
++        releaseDown = (c & UnknownEnum.Value_32) != 0;
++        holdLeft = (c & UnknownEnum.Value_64) != 0;
++        pressLeft = (c & UnknownEnum.Value_128) != 0;
++        releaseLeft = (c & UnknownEnum.Value_256) != 0;
++        holdRight = (c & UnknownEnum.Value_512) != 0;
++        pressRight = (c & UnknownEnum.Value_1024) != 0;
++        releaseRight = (c & UnknownEnum.Value_2048) != 0;
++        fire1 = (c & UnknownEnum.Value_4096) != 0;
++        fire1pressed = (c & UnknownEnum.Value_8192) != 0;
++        fire1released = (c & UnknownEnum.Value_16384) != 0;
++        fire2 = (c & UnknownEnum.Value_32768) != 0;
++        fire2pressed = (c & UnknownEnum.Value_65536) != 0;
++        fire2released = (c & UnknownEnum.Value_131072) != 0;
++        pressStart = (c & UnknownEnum.Value_262144) != 0;
++    }
++    else
++    {
++        var c = UnknownEnum.Value_0;
++        c = c | (holdUp ? UnknownEnum.Value_1 : UnknownEnum.Value_0);
++        c = c | (pressUp ? UnknownEnum.Value_2 : UnknownEnum.Value_0);
++        c = c | (releaseUp ? UnknownEnum.Value_4 : UnknownEnum.Value_0);
++        c = c | (holdDown ? UnknownEnum.Value_8 : UnknownEnum.Value_0);
++        c = c | (pressDown ? UnknownEnum.Value_16 : UnknownEnum.Value_0);
++        c = c | (releaseDown ? UnknownEnum.Value_32 : UnknownEnum.Value_0);
++        c = c | (holdLeft ? UnknownEnum.Value_64 : UnknownEnum.Value_0);
++        c = c | (pressLeft ? UnknownEnum.Value_128 : UnknownEnum.Value_0);
++        c = c | (releaseLeft ? UnknownEnum.Value_256 : UnknownEnum.Value_0);
++        c = c | (holdRight ? UnknownEnum.Value_512 : UnknownEnum.Value_0);
++        c = c | (pressRight ? UnknownEnum.Value_1024 : UnknownEnum.Value_0);
++        c = c | (releaseRight ? UnknownEnum.Value_2048 : UnknownEnum.Value_0);
++        c = c | (fire1 ? UnknownEnum.Value_4096 : UnknownEnum.Value_0);
++        c = c | (fire1pressed ? UnknownEnum.Value_8192 : UnknownEnum.Value_0);
++        c = c | (fire1released ? UnknownEnum.Value_16384 : UnknownEnum.Value_0);
++        c = c | (fire2 ? UnknownEnum.Value_32768 : UnknownEnum.Value_0);
++        c = c | (fire2pressed ? UnknownEnum.Value_65536 : UnknownEnum.Value_0);
++        c = c | (fire2released ? UnknownEnum.Value_131072 : UnknownEnum.Value_0);
++        c = c | (pressStart ? UnknownEnum.Value_262144 : UnknownEnum.Value_0);
++        while (array_length(global.CT_INPUTS) < (inputFrame + 1))
++        {
++            array_push(global.CT_INPUTS, UnknownEnum.Value_0);
++        }
++        if (player == 1)
++        {
++            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & 4294967295) | (c << UnknownEnum.Value_32);
++        }
++        else
++        {
++            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & -4294967296) | c;
++        }
++    }
++}
++
++function readTasFile(arg0)
++{
++    if (file_exists(arg0))
++    {
++        var b = buffer_load(arg0);
++        var magic = buffer_read(b, buffer_u32);
++        if (magic == UnknownEnum.Value_1396790339)
++        {
++            var version = buffer_read(b, buffer_u32);
++            var inputsLength = buffer_read(b, buffer_s32);
++            var randomizeLength = buffer_read(b, buffer_s32);
++            buffer_seek(b, buffer_seek_start, 1024);
++            global.CT_INPUTS = array_create(inputsLength);
++            global.CT_RANDOMIZE_TABLE = array_create(randomizeLength);
++            for (var i = 0; i < inputsLength; i++)
++            {
++                global.CT_INPUTS[i] = buffer_read(b, buffer_u64);
++            }
++            for (var i = 0; i < randomizeLength; i++)
++            {
++                global.CT_RANDOMIZE_TABLE[i] = array_create(2);
++                global.CT_RANDOMIZE_TABLE[i][0] = buffer_read(b, buffer_s32);
++                global.CT_RANDOMIZE_TABLE[i][1] = buffer_read(b, buffer_f64);
++            }
++        }
++        buffer_delete(b);
++    }
++    global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS) - 1;
++}
++
++function writeTasFile(arg0)
++{
++    var inputsLength = min(global.INPUT_FRAME + 1, array_length(global.CT_INPUTS));
++    var b = buffer_create(1024, buffer_grow, 1);
++    buffer_fill(b, 0, buffer_u8, 0, 1024);
++    buffer_write(b, buffer_u32, UnknownEnum.Value_1396790339);
++    buffer_write(b, buffer_u32, UnknownEnum.Value_1);
++    buffer_write(b, buffer_s32, inputsLength);
++    var randomizeLengthOffset = buffer_tell(b);
++    buffer_seek(b, buffer_seek_start, 1024);
++    for (var i = 0; i < inputsLength; i++)
++    {
++        buffer_write(b, buffer_u64, global.CT_INPUTS[i]);
++    }
++    var randomizeLength = array_length(global.CT_RANDOMIZE_TABLE);
++    for (var i = 0; i < randomizeLength; i++)
++    {
++        if (global.CT_RANDOMIZE_TABLE[i][0] > global.INPUT_FRAME)
++        {
++            randomizeLength = i;
++            break;
++        }
++        buffer_write(b, buffer_s32, global.CT_RANDOMIZE_TABLE[i][0]);
++        buffer_write(b, buffer_f64, global.CT_RANDOMIZE_TABLE[i][1]);
++    }
++    buffer_seek(b, buffer_seek_start, randomizeLengthOffset);
++    buffer_write(b, buffer_s32, randomizeLength);
++    buffer_save(b, arg0);
++    buffer_delete(b);
++}
++
+ function scrGetInput(arg0)
+ {
+     _player = arg0;
+     _slot = global.joySlot[arg0];
++    var inputFrame = global.INPUT_FRAME;
+     if (global.playbackMode && is_array(global.inputPlayback) && instance_exists(oGame))
+     {
+         pressStart = keyboard_check_pressed(global.keyMap[_player][global.INP_START]) || gamepad_button_check_pressed(_slot, global.joyMap[_player][global.INP_START]) || keyboard_check_pressed(vk_escape);
++        applyTasInputs(_player, inputFrame);
+         if (pressStart)
+         {
+             global.inputFrame--;
+@@ -190,4 +321,30 @@
+     {
+         global.inputFocus = 2;
+     }
++    applyTasInputs(_player, inputFrame);
++}
++
++enum UnknownEnum
++{
++    Value_0,
++    Value_1,
++    Value_2,
++    Value_4 = 4,
++    Value_8 = 8,
++    Value_16 = 16,
++    Value_32 = 32,
++    Value_64 = 64,
++    Value_128 = 128,
++    Value_256 = 256,
++    Value_512 = 512,
++    Value_1024 = 1024,
++    Value_2048 = 2048,
++    Value_4096 = 4096,
++    Value_8192 = 8192,
++    Value_16384 = 16384,
++    Value_32768 = 32768,
++    Value_65536 = 65536,
++    Value_131072 = 131072,
++    Value_262144 = 262144,
++    Value_1396790339 = 1396790339
+ }
+--- original/gml_GlobalScript_scrInit.gml
++++ patched/gml_GlobalScript_scrInit.gml
+@@ -1,6 +1,6 @@
+ function scrInit()
+ {
+-    global.betaVersion = "1.7.6";
++    global.betaVersion = "1.7.6 - CoffeeTools v1.3.1";
+     global.PLAT_STEAM = 0;
+     global.PLAT_SWITCH = 1;
+     global.PLAT_PS4 = 2;
+@@ -53,6 +53,7 @@
+     global.CUSTOM_ACHIEVEMENT_NOTIFICATIONS = false;
+     scrInitText();
+     global.STANDARD_FPS = 60;
++    global.prePauseFPS = 60;
+     scrInitDisplay();
+     if (global.debugOn)
+     {
+--- original/gml_GlobalScript_scrPause.gml
++++ patched/gml_GlobalScript_scrPause.gml
+@@ -6,6 +6,8 @@
+     }
+     global.paused = true;
+     global.prePauseFont = global.currFont;
++    global.prePauseFPS = game_get_speed(gamespeed_fps);
++    display_reset(0, true);
+     game_set_speed(60, gamespeed_fps);
+     scrSaveTimePlayed();
+     if (audio_exists(global.SFX))
+--- original/gml_GlobalScript_scrPlayGame.gml
++++ patched/gml_GlobalScript_scrPlayGame.gml
+@@ -23,7 +23,10 @@
+     scrTexturegroupChange(global.TEXTUREGROUP[0], global.TEXTUREGROUP[global.currGameID]);
+     scrOpenCurrFile();
+     var playCount = scrReadRealManual(0, "gameRunCount" + string(global.currGameID), 0);
++    if (!global.CT_BlockSaves)
++    {
+     scrWriteRealManual(0, "gameRunCount" + string(global.currGameID), playCount + 1);
++    }
+     global.currWin = scrReadRealManual(0, "gameWin" + string(global.currGameID), 0);
+     global.currGardenWin = scrReadRealManual(0, "gardenWin" + string(global.currGameID), 0);
+     scrCloseCurrFile();
+--- original/gml_GlobalScript_scrRandomize.gml
++++ patched/gml_GlobalScript_scrRandomize.gml
+@@ -6,7 +6,22 @@
+     }
+     else
+     {
++        if (global.RANDOMIZE_INDEX < array_length(global.CT_RANDOMIZE_TABLE))
++        {
++            if (global.CT_RANDOMIZE_TABLE[global.RANDOMIZE_INDEX][0] != global.INPUT_FRAME)
++            {
++                show_message("Desync Detected!\n\nExpected randomize() on input frame " + string(global.CT_RANDOMIZE_TABLE[global.RANDOMIZE_INDEX][0]) + " but got it on frame " + string(global.INPUT_FRAME));
++            }
++        }
++        else
++        {
++            if (global.RANDOMIZE_INDEX != array_length(global.CT_RANDOMIZE_TABLE))
++            {
++                show_message("Something went wrong with randomize(). TAS will probably desync");
++            }
+         randomize();
+-        rng_seed(random(99999999));
++            array_push(global.CT_RANDOMIZE_TABLE, [global.INPUT_FRAME, random(99999999)]);
++        }
++        rng_seed(global.CT_RANDOMIZE_TABLE[global.RANDOMIZE_INDEX++][1]);
+     }
+ }
+--- original/gml_GlobalScript_scrSaveGame.gml
++++ patched/gml_GlobalScript_scrSaveGame.gml
+@@ -12,6 +12,10 @@
+     {
+         return false;
+     }
++    if (global.CT_BlockSaves == true)
++    {
++        return false;
++    }
+     scrOpenCurrFile();
+     var saveSuccess = false;
+     if (script_exists(global.mGameSaveScript[global.currGame]))
+--- original/gml_GlobalScript_scrSaveTimePlayed.gml
++++ patched/gml_GlobalScript_scrSaveTimePlayed.gml
+@@ -4,6 +4,10 @@
+     {
+         return false;
+     }
++    if (global.CT_BlockSaves)
++    {
++        return false;
++    }
+     scrOpenCurrFile();
+     var milsNew = current_time - global.timeStamp;
+     var milsPrev = scrReadRealManual(0, "timeSum", 0);
+--- original/gml_GlobalScript_scrScaleDisplay.gml
++++ patched/gml_GlobalScript_scrScaleDisplay.gml
+@@ -9,6 +9,13 @@
+         screenHeight = min(global.SCREEN_HEIGHT * _scale, display_get_height());
+         screenX = (_dwidth * 0.5) - (screenWidth * 0.5);
+         screenY = (_dheight * 0.5) - (screenHeight * 0.5);
++        if (ct_in_runloop())
++        {
++            screenWidth = (screenWidth / display_get_width()) * global.SCREEN_WIDTH * _scale;
++            screenHeight = (screenHeight / display_get_width()) * global.SCREEN_WIDTH * _scale;
++            screenX = (screenX / display_get_width()) * global.SCREEN_WIDTH * _scale;
++            screenY = (screenY / display_get_width()) * global.SCREEN_WIDTH * _scale;
++        }
+     }
+     else
+     {
+--- original/gml_GlobalScript_scrUnpause.gml
++++ patched/gml_GlobalScript_scrUnpause.gml
+@@ -5,6 +5,11 @@
+         exit;
+     }
+     global.paused = false;
++    if (global.prePauseFPS > 60)
++    {
++        display_reset(0, false);
++    }
++    game_set_speed(global.prePauseFPS, gamespeed_fps);
+     scrSetFont(global.prePauseFont);
+     if (audio_exists(global.SFX))
+     {
+--- original/gml_GlobalScript_scrWin.gml
++++ patched/gml_GlobalScript_scrWin.gml
+@@ -16,6 +16,10 @@
+     {
+         return false;
+     }
++    if (global.CT_BlockSaves)
++    {
++        return false;
++    }
+     scrOpenCurrFile();
+     if (arg0 == global.CHERRY_WIN)
+     {
+--- original/gml_Object_oHighscore_Step_0.gml
++++ patched/gml_Object_oHighscore_Step_0.gml
+@@ -252,7 +252,7 @@
+ }
+ if (state == 1)
+ {
+-    if (newScore[0] > hstable[9][1] || newScore[1] > hstable[9][1])
++    if ((newScore[0] > hstable[9][1] || newScore[1] > hstable[9][1]) && !global.CT_BlockSaves)
+     {
+         for (var i = 0; i < 2; i++)
+         {
+--- original/gml_Object_oLibrary_Other_11.gml
++++ patched/gml_Object_oLibrary_Other_11.gml
+@@ -23,6 +23,7 @@
+ }
+ else if (substate == SUB_EXIT)
+ {
++    global.CT_DisplayInputs = true;
+     scrTexturegroupChange(-1, global.TEXTUREGROUP[52]);
+     scrSwitchState(STATE_INTRO);
+ }
+--- original/gml_Object_oLibrary_Other_12.gml
++++ patched/gml_Object_oLibrary_Other_12.gml
+@@ -312,7 +312,7 @@
+             }
+             break;
+     }
+-    if ((fire2pressed || pressStart || keyboard_check_pressed(vk_space) || keyboard_check_pressed(vk_enter)) && (INTRO_TIME > 10 || INTRO_SCENE > 1))
++    if ((fire2pressed || pressStart) && (INTRO_TIME > 10 || INTRO_SCENE > 1))
+     {
+         if (INTRO_SCENE < 24)
+         {
+--- original/gml_Object_oScreenHandler_Create_0.gml
++++ patched/gml_Object_oScreenHandler_Create_0.gml
+@@ -10,3 +10,40 @@
+ pal_bright = 1;
+ pal_bright_target = 1;
+ do_screen = false;
++global.CT_DisplayInputs = false;
++global.CT_DisplayP2Inputs = false;
++multiPressed = [[0, 0], [0, 0]];
++multiPressedState = [[0, 0], [0, 0]];
++global.CT_MsgText = "";
++global.CT_MessageTimer = 0;
++global.CT_MessageTimer2 = 0;
++frameAdvanceSurface = -1;
++global.CT_BlockSaves = false;
++global.CT_FeedbackMessages = true;
++global.CT_TARGET_FPS = 60;
++global.FRAME_COUNT = 0;
++global.CT_ShowFrameCounter = false;
++global.CT_INPUTS = array_create(0);
++global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS);
++global.CT_RANDOMIZE_TABLE = array_create(0);
++if (file_exists("coffeetools/play.ctas"))
++{
++    readTasFile("coffeetools/play.ctas");
++    global.CT_ShowTasFrameCounter = true;
++}
++else
++{
++    global.CT_ShowTasFrameCounter = false;
++}
++global.INPUT_FRAME = 0;
++global.RANDOMIZE_INDEX = 0;
++global.CT_KEY_AUTO_REPEAT = array_create(256);
++debugScreen = 0;
++debugCursorX = 0;
++debugCursorY = 0;
++debugDSType = 5;
++debugDSID = 0;
++debugDSOffsetX = 0;
++debugDSOffsetY = 0;
++debugDSOffsetWidth = 0;
++debugDSStackQueueRead = "";
+--- original/gml_Object_oScreenHandler_Draw_75.gml
++++ patched/gml_Object_oScreenHandler_Draw_75.gml
+@@ -1,3 +1,7 @@
++if (!ct_init())
++{
++    show_error("CoffeeTools.dll failed to load.\nMake sure you copied CoffeeTools.dll into the same folder as data.win.", false);
++}
+ if (!global.canDoShaders)
+ {
+     exit;
+@@ -8,6 +12,59 @@
+ {
+     display_set_gui_maximize(1, 1, 0, 0);
+ }
++surface_set_target(application_surface);
++if ((global.CT_INPUTS_LENGTH > 0 && (global.INPUT_FRAME + 1) == global.CT_INPUTS_LENGTH) && false)
++{
++    global.CT_MsgText = "INPUT PLAYBACK ENDED";
++    global.CT_MessageTimer = current_time + 2000;
++}
++else if ((global.CT_INPUTS_LENGTH > 0 && global.INPUT_FRAME == 0) && false)
++{
++    global.CT_MsgText = "INPUT PLAYBACK STARTED";
++    global.CT_MessageTimer = current_time + 2000;
++}
++for (var i = 0; i < 2; i++)
++{
++    scrGetInput(i);
++    trackPresses(i, 0, fire2pressed);
++    trackPresses(i, 1, fire1pressed);
++    if (global.CT_DisplayInputs)
++    {
++        if (i == 0)
++        {
++            if (pressStart)
++            {
++                draw_sprite_ext(sVirtualInputs, 6, 32, 192, 1, 1, 0, global.palette[0], 1);
++            }
++            else
++            {
++                draw_sprite_ext(sVirtualInputs, 6, 32, 192, 1, 1, 0, global.palette[16], 1);
++            }
++        }
++        if (global.CT_DisplayP2Inputs || i == 0)
++        {
++            drawKey(0, 16 + (48 * i), 192, holdUp, pressUp, releaseUp);
++            drawKey(3, 8 + (48 * i), 200, holdLeft, pressLeft, releaseLeft);
++            drawKey(2, 16 + (48 * i), 200, holdDown, pressDown, releaseDown);
++            drawKey(1, 24 + (48 * i), 200, holdRight, pressRight, releaseRight);
++            drawKey(5, 32 + (48 * i), 200, fire2, fire2pressed, fire2released);
++            drawKey(4, 40 + (48 * i), 200, fire1, fire1pressed, fire1released);
++            if (multiPressedState[i][0] != 0)
++            {
++                draw_sprite(sMultiPressed, multiPressed[i][0] - 1, 32 + (48 * i), 208);
++            }
++            if (multiPressedState[i][1] != 0)
++            {
++                draw_sprite(sMultiPressed, multiPressed[i][1] - 1, 40 + (48 * i), 208);
++            }
++        }
++    }
++}
++surface_reset_target();
++
++function drawScreenWithToolsText()
++{
++    drawToolsText();
+ var _scale = scrDrawCheckSurfaces();
+ if (do_screen && surface_exists(global.bufferSurface[0]) && surface_exists(global.bufferSurface[1]))
+ {
+@@ -43,3 +100,13 @@
+ {
+     do_screen = true;
+ }
++}
++
++if (!surface_exists(frameAdvanceSurface))
++{
++    frameAdvanceSurface = surface_create(global.SCREEN_WIDTH, global.SCREEN_HEIGHT);
++}
++surface_set_target(frameAdvanceSurface);
++draw_surface(application_surface, 0, 0);
++surface_reset_target();
++drawScreenWithToolsText();
+--- original/gml_Object_oTitleScreens_Draw_0.gml
++++ patched/gml_Object_oTitleScreens_Draw_0.gml
+@@ -1,6 +1,10 @@
+ scrFontDefault();
+ if (state == STATE_BLACKSCREEN)
+ {
++    if (stateCounter == 30)
++    {
++        scrFFrame(6);
++    }
+     scrFillScreen(0);
+ }
+ if (state == STATE_TITLE)
