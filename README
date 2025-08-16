@@ -4,8 +4,8 @@ To install the mod, use Delta Patcher to apply the [.xdelta] patch to UFO 50's [
 and move CoffeeTools.dll to be in the same folder as the modified [data.win].
 
  CONTROLS
-[F1] : Show/hide input display
 [F2] : Show/hide player 2 inputs
+[F3] : Show/hide input display
 [F4] : Block game saving
 [F5] : Show/hide savestate messages
 [F6] : Show/hide frame counter
