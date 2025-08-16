@@ -36,7 +36,7 @@ function modifyFps(arg0, arg1)
         
         if (arg1 != 0)
         {
-            var list = [5, 10, 15, 20, 30, 60, 90, 120, 180, 240, 480, 960, 1920];
+            var list = [5, 10, 15, 20, 30, 40, 48, 60, 90, 120, 180, 240, 480, 960, 1920];
             var index = arrayGetIndex(list, global.STANDARD_FPS);
             
             if (index != -1 && (index + arg1) >= 0 && (index + arg1) < array_length(list))
@@ -250,6 +250,12 @@ function savestateSlot(arg0, arg1)
                 buffer_write(appendFileBuffer, buffer_u8, 0);
             }
             
+            //Remember some camera info to hopefully fix rare 'zoomed in camera' glitch
+            buffer_write(appendFileBuffer, buffer_u32, __view_get(e__VW.XView, 0));
+            buffer_write(appendFileBuffer, buffer_u32, __view_get(e__VW.YView, 0));
+            buffer_write(appendFileBuffer, buffer_u32, __view_get(e__VW.WView, 0));
+            buffer_write(appendFileBuffer, buffer_u32, __view_get(e__VW.HView, 0));
+            
             // For DataStructures, I was originally planning to use writeVariable() but instead I'm using GameMaker's serialisation functions (Example: ds_map_write())
             // This makes the filesize a little bit larger. In the future I might consider switching to writeVariable() if I'm sure it's bug-free.
             
@@ -384,7 +390,7 @@ function savestateSlot(arg0, arg1)
                         sprite_delete(sprite);
                     }
                     
-                    //Write CoffeeTools preferences and other unchanging variables to temp buffer
+                    //Write CoffeeTools-related and other unchanging variables to temp buffer
                     count = 0;
                     var tempMemoryBuffer = buffer_create(0, buffer_grow, 1);
                     buffer_write(tempMemoryBuffer, buffer_u32, 0);
@@ -392,7 +398,7 @@ function savestateSlot(arg0, arg1)
                     for (var i = 0; i < array_length(variables); i++)
                     {
                         var n = variables[i];
-                        if (string_copy(n, 0, 3) == "CT_" || n == "STANDARD_FPS" || n == "BGM" || n == "SFX" || n == "SFX_PRIORITY")
+                        if (string_copy(n, 0, 3) == "CT_" || n == "STANDARD_FPS" || n == "BGM" || string_copy(n, 1, 3) == "SFX")
                         {
                             writeGlobalVariable(tempMemoryBuffer, n);
                         }
@@ -423,6 +429,12 @@ function savestateSlot(arg0, arg1)
                         //json_stringify() didn't include method variables, so missionStatus will be fixed later in the script
                         o45__Game.missionStatus = json_parse(buffer_read(appendFileBuffer, buffer_string));
                     }
+                    
+                    //Remember some camera info to hopefully fix rare 'zoomed in camera' glitch
+                    __view_set(e__VW.XView, 0, buffer_read(appendFileBuffer, buffer_u32));
+                    __view_set(e__VW.YView, 0, buffer_read(appendFileBuffer, buffer_u32));
+                    __view_set(e__VW.WView, 0, buffer_read(appendFileBuffer, buffer_u32));
+                    __view_set(e__VW.HView, 0, buffer_read(appendFileBuffer, buffer_u32));
                     
                     if (LOG.LEVEL >= LOG.VERBOSE) trace("READ DS_MAPS");
                     count = buffer_read(appendFileBuffer, buffer_u16);
@@ -776,16 +788,22 @@ function savestateSlot(arg0, arg1)
                     //Read CoffeeTools preferences and other unchanging variables from temp buffer
                     buffer_seek(tempMemoryBuffer, buffer_seek_start, 0);
                     count = buffer_read(tempMemoryBuffer, buffer_u32);
+                    var sfxPrev = global.SFX;
                     for (var i = 0; i < count; i++)
                     {
                         readGlobalVariable(tempMemoryBuffer);
                     }
+                    //If a looping SFX is still playing when it shouldn't be, then stop it
+                    if (global.SFX_LOOP && global.SFX != sfxPrev)
+                        mute(global.SFX);
                     //Quick fix for Library music
                     oAudioHandler.bgmLibraryNormal = buffer_read(tempMemoryBuffer, buffer_u32);
                     oAudioHandler.bgmLibraryGarden = buffer_read(tempMemoryBuffer, buffer_u32);
                     oAudioHandler.bgmLibraryInfinity = buffer_read(tempMemoryBuffer, buffer_u32);
                     //Quick fix in case user is loading a savestate during a freeze frame
                     game_set_speed(global.STANDARD_FPS, gamespeed_fps);
+                    //On the frame a savestate was just loaded, we will fix any inputs that are incongruent with the previous frame.
+                    global.CT_FixIncongruentInputsFrame = true;
                     buffer_delete(tempMemoryBuffer);
                     
                     readTasFile(name + ".ctas");
@@ -879,15 +897,15 @@ function performActions()
 {
     var wasPaused = ct_is_paused();
 
-    if (ct_keyboard_check_pressed(vk_f1))
-    {
-        global.CT_DisplayInputs = !global.CT_DisplayInputs;
-    }
-
     if (ct_keyboard_check_pressed(vk_f2))
     {
         global.CT_DisplayP2Inputs = !global.CT_DisplayP2Inputs;
         global.CT_DisplayInputs = true;
+    }
+
+    if (ct_keyboard_check_pressed(vk_f3))
+    {
+        global.CT_DisplayInputs = !global.CT_DisplayInputs;
     }
 
     if (ct_keyboard_check_pressed(vk_f4))
@@ -1422,6 +1440,297 @@ function drawToolsText()
     surface_reset_target();
 }
 
+function applyTasInputs(arg0, arg1)
+{
+    var player = arg0;
+    var inputFrame = arg1;
+    
+    if (inputFrame < global.CT_INPUTS_LENGTH)
+    {
+        var c = global.CT_INPUTS[inputFrame];
+        
+        if (player == 1)
+            c = c >> int64(32);
+
+        holdUp        = (c & (int64(1) << int64(0))) != 0;
+        pressUp       = (c & (int64(1) << int64(1))) != 0;
+        releaseUp     = (c & (int64(1) << int64(2))) != 0;
+        holdDown      = (c & (int64(1) << int64(3))) != 0;
+        pressDown     = (c & (int64(1) << int64(4))) != 0;
+        releaseDown   = (c & (int64(1) << int64(5))) != 0;
+        holdLeft      = (c & (int64(1) << int64(6))) != 0;
+        pressLeft     = (c & (int64(1) << int64(7))) != 0;
+        releaseLeft   = (c & (int64(1) << int64(8))) != 0;
+        holdRight     = (c & (int64(1) << int64(9))) != 0;
+        pressRight    = (c & (int64(1) << int64(10))) != 0;
+        releaseRight  = (c & (int64(1) << int64(11))) != 0;
+        fire1         = (c & (int64(1) << int64(12))) != 0;
+        fire1pressed  = (c & (int64(1) << int64(13))) != 0;
+        fire1released = (c & (int64(1) << int64(14))) != 0;
+        fire2         = (c & (int64(1) << int64(15))) != 0;
+        fire2pressed  = (c & (int64(1) << int64(16))) != 0;
+        fire2released = (c & (int64(1) << int64(17))) != 0;
+        pressStart    = (c & (int64(1) << int64(18))) != 0;
+    }
+    else
+    {
+        var c = int64(0);
+
+        if (holdUp)        c |= int64(1) << int64(0);
+        if (pressUp)       c |= int64(1) << int64(1);
+        if (releaseUp)     c |= int64(1) << int64(2);
+        if (holdDown)      c |= int64(1) << int64(3);
+        if (pressDown)     c |= int64(1) << int64(4);
+        if (releaseDown)   c |= int64(1) << int64(5);
+        if (holdLeft)      c |= int64(1) << int64(6);
+        if (pressLeft)     c |= int64(1) << int64(7);
+        if (releaseLeft)   c |= int64(1) << int64(8);
+        if (holdRight)     c |= int64(1) << int64(9);
+        if (pressRight)    c |= int64(1) << int64(10);
+        if (releaseRight)  c |= int64(1) << int64(11);
+        if (fire1)         c |= int64(1) << int64(12);
+        if (fire1pressed)  c |= int64(1) << int64(13);
+        if (fire1released) c |= int64(1) << int64(14);
+        if (fire2)         c |= int64(1) << int64(15);
+        if (fire2pressed)  c |= int64(1) << int64(16);
+        if (fire2released) c |= int64(1) << int64(17);
+        if (pressStart)    c |= int64(1) << int64(18);
+        
+        while (array_length(global.CT_INPUTS) < (inputFrame + 1))
+            array_push(global.CT_INPUTS, int64(0));
+        
+        if (player == 1)
+            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & 4294967295) | (c << int64(32));
+        else
+            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & -4294967296) | c;
+    }
+}
+
+function readTasFile(arg0)
+{
+    if (file_exists(arg0))
+    {
+        var b = buffer_load(arg0);
+        var magic = buffer_read(b, buffer_u32);
+        
+        if (magic == APPEND_FILE.MAGIC)
+        {
+            var version = buffer_read(b, buffer_u32);
+            var inputsLength = buffer_read(b, buffer_s32);
+            var randomizeLength = buffer_read(b, buffer_s32);
+            buffer_seek(b, buffer_seek_start, 1024);
+            global.CT_INPUTS = array_create(inputsLength);
+            global.CT_RANDOMIZE_TABLE = array_create(randomizeLength);
+            
+            for (var i = 0; i < inputsLength; i++)
+                global.CT_INPUTS[i] = buffer_read(b, buffer_u64);
+            
+            for (var i = 0; i < randomizeLength; i++)
+            {
+                global.CT_RANDOMIZE_TABLE[i] = array_create(2);
+                global.CT_RANDOMIZE_TABLE[i][0] = buffer_read(b, buffer_s32);
+                global.CT_RANDOMIZE_TABLE[i][1] = buffer_read(b, buffer_f64);
+            }
+            
+            //Now inputs have been loaded from CTAS file, check for any incongruent inputs originating from older CoffeeTools versions.
+            //Runs only when a CTAS is being played back on startup, not when loading a savestate.
+            if(global.FRAME_COUNT == 0)
+            {
+                var incongruentInputsCount = 0;
+                for (var player = 0; player < 2; player++)
+                {
+                    var cprev = global.CT_INPUTS[0];
+                    
+                    if (player == 1)
+                        c = c >> int64(32);
+                    
+                    for (var inputFrame = 1; inputFrame < inputsLength; inputFrame++)
+                    {
+                        var c = global.CT_INPUTS[inputFrame];
+                        
+                        if (player == 1)
+                            c = c >> int64(32);
+                        
+                        for (var input = 0; input < 6; input ++) //UP, DOWN, LEFT, RIGHT, FIRE1, FIRE2
+                        {
+                            var pressed = (c & power(2,(input*3)+1)) != 0
+                            var held = (c & power(2,(input*3)+0)) != 0
+                            var released = (c & power(2,(input*3)+2)) != 0
+                            var heldprev = (cprev & power(2,(input*3)+0)) != 0
+                            
+                            if(heldprev and !held and !released) && (input > 3) //Possible for UP, DOWN, LEFT, RIGHT by using a gamepad's stick
+                            {
+                                incongruentInputsCount ++
+                                //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
+                            }
+                            //else if (pressed && !released && heldprev) && (false) //Possible for UP, DOWN, LEFT, RIGHT, FIRE1, FIRE2 by using both keyboard and gamepad (Disabled)
+                            //{
+                            //    incongruentInputsCount ++
+                            //    //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
+                            //}
+                            else if (!pressed && !held && released && !heldprev) && (input > 3) //Possible for UP, DOWN, LEFT, RIGHT by holding opposite direction
+                            {
+                                incongruentInputsCount ++
+                                //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
+                            }
+                            if (!pressed && held && !heldprev) //Possible for UP, DOWN, LEFT, RIGHT by letting go of the opposite direction.
+                            {
+                                var heldopp = false
+                                if(input = 0)
+                                    heldopp = (c & power(2,(1*3)+0)) != 0
+                                else if(input = 1)
+                                    heldopp = (c & power(2,(0*3)+0)) != 0
+                                else if(input = 2)
+                                    heldopp = (c & power(2,(3*3)+0)) != 0
+                                else if(input = 3)
+                                    heldopp = (c & power(2,(2*3)+0)) != 0
+                                
+                                if((input < 4) && (heldopp)) || (input > 3) //If the opposite direction is currently held, then something's wrong.
+                                {
+                                    incongruentInputsCount ++
+                                    //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+1)) //Flip pressed flag
+                                }
+                            }
+                        }
+                        
+                        cprev = c;
+                    }
+                }
+                if(incongruentInputsCount != 0)
+                {
+                    show_message("Detected "+string(incongruentInputsCount)+" incongruent inputs in CTAS file.")
+                }
+            }
+        }
+        
+        buffer_delete(b);
+    }
+    
+    global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS) - 1;
+}
+
+function writeTasFile(arg0)
+{
+    var inputsLength = min(global.INPUT_FRAME + 1, array_length(global.CT_INPUTS));
+    var b = buffer_create(1024, buffer_grow, 1);
+    buffer_fill(b, 0, buffer_u8, 0, 1024);
+    buffer_write(b, buffer_u32, APPEND_FILE.MAGIC);
+    buffer_write(b, buffer_u32, APPEND_FILE.VERSION);
+    buffer_write(b, buffer_s32, inputsLength);
+    var randomizeLengthOffset = buffer_tell(b);
+    buffer_seek(b, buffer_seek_start, 1024);
+    
+    for (var i = 0; i < inputsLength; i++)
+        buffer_write(b, buffer_u64, global.CT_INPUTS[i]);
+    
+    var randomizeLength = array_length(global.CT_RANDOMIZE_TABLE);
+    
+    for (var i = 0; i < randomizeLength; i++)
+    {
+        if (global.CT_RANDOMIZE_TABLE[i][0] > global.INPUT_FRAME)
+        {
+            randomizeLength = i;
+            break;
+        }
+        
+        buffer_write(b, buffer_s32, global.CT_RANDOMIZE_TABLE[i][0]);
+        buffer_write(b, buffer_f64, global.CT_RANDOMIZE_TABLE[i][1]);
+    }
+    
+    buffer_seek(b, buffer_seek_start, randomizeLengthOffset);
+    buffer_write(b, buffer_s32, randomizeLength);
+    buffer_save(b, arg0);
+    buffer_delete(b);
+}
+
+//These functions will alter the current frame's inputs if they are ever incongruent with the previous frame's inputs (via savestate loading)
+function keyboard_check_pressed_verify(player,input)
+{
+    var pressed = keyboard_check_pressed(global.keyMap[player][input])
+    var held = keyboard_check(global.keyMap[player][input])
+    var released = keyboard_check_released(global.keyMap[player][input])
+    var heldprev = global.PreviousFrameInputs[player][input]
+    
+    if(!global.CT_FixIncongruentInputsFrame) return pressed;
+    
+    if (!pressed && held && !heldprev)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot23, 0, 0);
+        return true;
+    }
+    else
+    {
+        return pressed;
+    }
+}
+function keyboard_check_released_verify(player,input)
+{
+    var pressed = keyboard_check_pressed(global.keyMap[player][input])
+    var held = keyboard_check(global.keyMap[player][input])
+    var released = keyboard_check_released(global.keyMap[player][input])
+    var heldprev = global.PreviousFrameInputs[player][input]
+    
+    if(!global.CT_FixIncongruentInputsFrame) return released;
+    
+    if (!held && !released && heldprev)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot20, 0, 0);
+        return true;
+    }
+    else if (pressed && !released && heldprev)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot21, 0, 0);
+        return true;
+    }
+    else if (!pressed && !held && released && !heldprev)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot22, 0, 0);
+        return false;
+    }
+    else
+    {
+        return released;
+    }
+}
+function gamepad_button_check_pressed_verify_2(slot,player,input,index)
+{
+    var held = gamepad_button_check(slot, input)
+    var pressed = gamepad_button_check_pressed(slot, input)
+    var heldprev = global.PreviousFrameInputs[player][index + 6]
+    
+    if(!global.CT_FixIncongruentInputsFrame) return pressed;
+    
+    var correctedPressed = held && !heldprev;
+    if (pressed != correctedPressed)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot04, 0, 0);
+    }
+    return correctedPressed;
+}
+function gamepad_button_check_released_verify_2(slot,player,input,index)
+{
+    var held = gamepad_button_check(slot, input)
+    var released = gamepad_button_check_released(slot, input)
+    var heldprev = global.PreviousFrameInputs[player][index + 6]
+    
+    if(!global.CT_FixIncongruentInputsFrame) return released;
+    
+    var correctedReleased = !held && heldprev;
+    if (released != correctedReleased)
+    {
+        if (DEBUG.MODE == DEBUG.ON) audio_play_sound(sfx_shot01, 0, 0);
+    }
+    return correctedReleased;
+}
+function gamepad_button_check_pressed_verify(slot,player,input)
+{
+    return gamepad_button_check_pressed_verify_2(slot,player,global.joyMap[player][input],input);
+}
+function gamepad_button_check_released_verify(slot,player,input)
+{
+    return gamepad_button_check_released_verify_2(slot,player,global.joyMap[player][input],input);
+}
+
 enum LOG
 {
     NONE,
@@ -1450,7 +1759,28 @@ enum C
 enum APPEND_FILE
 {
     MAGIC = 0x46415443,
-    VERSION = 1,
+    VERSION = 2,
 
     HEADER_LENGTH = 1024
+}
+
+enum e__VW
+{
+    XView,
+    YView,
+    WView,
+    HView,
+    Angle,
+    HBorder,
+    VBorder,
+    HSpeed,
+    VSpeed,
+    Object,
+    Visible,
+    XPort,
+    YPort,
+    WPort,
+    HPort,
+    Camera,
+    SurfaceID
 }

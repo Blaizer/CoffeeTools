@@ -6,9 +6,9 @@ string ExportAsm(UndertaleData utdata, UndertaleCode code) {
     return code.Disassemble(utdata.Variables, utdata.CodeLocals?.For(code));
 }
 
-var __g_ExportCodeSettings = new DecompilerSettings() {
-    CleanupLocalVarDeclarations = false,
-};
+// var __g_ExportCodeSettings = new DecompilerSettings() {
+//     CleanupLocalVarDeclarations = false,
+// };
 var __g_ExportCodeContext = new System.Runtime.CompilerServices.ConditionalWeakTable<UndertaleData, GlobalDecompileContext>();
 GlobalDecompileContext _ExportCodeContext(UndertaleData utdata) {
     lock(utdata) {
@@ -103,7 +103,7 @@ async Task ImportCodeFiles(string[] scriptFiles, bool updateStatus = false) {
 
     BeginImportCode();
     var importGroup = new UndertaleModLib.Compiler.CodeImportGroup(Data);
-    await Task.Run(() => {
+    // await Task.Run(() => {
         foreach (string scriptFile in scriptFiles) {
             if(!Path.GetExtension(scriptFile).Equals(".gml")) {
                 throw new ScriptException($"Not a GML file: ${scriptFile}");
@@ -125,7 +125,7 @@ async Task ImportCodeFiles(string[] scriptFiles, bool updateStatus = false) {
         if(updateStatus) {
             IncrementProgressParallel();
         }
-    });
+    // });
 
     EndImportCode();
 }

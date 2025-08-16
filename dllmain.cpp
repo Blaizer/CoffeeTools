@@ -12,7 +12,7 @@ YYRunnerInterface* g_pYYRunnerInterface;
 namespace
 {
     constexpr char c_ExtensionName[] = "CoffeeTools";
-    constexpr char c_ExtensionVersion[] = "1.3.1";
+    constexpr char c_ExtensionVersion[] = "1.3.2";
 
     constexpr size_t c_exe_run_loop = 0x1401ceca0;
     constexpr size_t c_exe_wndproc = 0x1400d6f00;
@@ -21,6 +21,7 @@ namespace
     constexpr size_t c_exe_check_audio_groups_loaded = 0x140840790;
     constexpr size_t c_exe_update_texture_status = 0x14010d3b0;
     constexpr size_t c_exe_perform_game_load = 0x1401c8be0;
+    constexpr size_t c_exe_yygml_exception_handler = 0x1402fbec0;
 
     YYRunnerInterface g_runnerInterface;
     CInstance* g_selfinst;
@@ -120,43 +121,50 @@ namespace
 
     int Runloop()
     {
-        auto lastRefreshTime = Timing_Time();
-
-        g_inRunloop = true;
-
-        while (true)
+        try
         {
-            PerformActions();
+            auto lastRefreshTime = Timing_Time();
 
-            if (!g_isPaused || g_isQuitting || g_isFrameAdvancing)
+            g_inRunloop = true;
+
+            while (true)
             {
-                break;
+                PerformActions();
+
+                if (!g_isPaused || g_isQuitting || g_isFrameAdvancing)
+                {
+                    break;
+                }
+
+                auto time = Timing_Time();
+                auto timeSinceLastRefresh = time - lastRefreshTime;
+                if (timeSinceLastRefresh >= 16667)
+                {
+                    lastRefreshTime = time;
+                    RefreshScreen(); // so that the steam overlay still works while paused
+                }
+                else
+                {
+                    Timing_Sleep(16667 - timeSinceLastRefresh);
+                }
+
+                ((void (*)())c_exe_poll_messages)();
+            }
+            g_isFrameAdvancing = false;
+
+            if (g_selfinst)
+            {
+                RValue result = {};
+                Script_Perform(gml_Script_incrementFrame, g_selfinst, g_selfinst, 0, &result, nullptr);
+                FREE_RValue(&result);
             }
 
-            auto time = Timing_Time();
-            auto timeSinceLastRefresh = time - lastRefreshTime;
-            if (timeSinceLastRefresh >= 16667)
-            {
-                lastRefreshTime = time;
-                RefreshScreen(); // so that the steam overlay still works while paused
-            }
-            else
-            {
-                Timing_Sleep(16667 - timeSinceLastRefresh);
-            }
-
-            ((void (*)())c_exe_poll_messages)();
+            g_inRunloop = false;
         }
-        g_isFrameAdvancing = false;
-
-        if (g_selfinst)
+        catch (YYGMLException e)
         {
-            RValue result = {};
-            Script_Perform(gml_Script_incrementFrame, g_selfinst, g_selfinst, 0, &result, nullptr);
-            FREE_RValue(&result);
+            ((void (*)(YYGMLException))c_exe_yygml_exception_handler)(e);
         }
-
-        g_inRunloop = false;
 
         return ((decltype(&Runloop))g_origRunloop)();
     }

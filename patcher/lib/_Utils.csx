@@ -71,7 +71,7 @@ async Task<UndertaleData> LoadExternalData(string path, bool updateStatus = fals
 
     await Task.Run(() => {
         using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
-            result = UndertaleIO.Read(stream, warning => ScriptMessage("A warning occured while trying to load " + path + ":\n" + warning));
+            result = UndertaleIO.Read(stream, (string warning, bool _) => ScriptMessage("A warning occured while trying to load " + path + ":\n" + warning));
         }
 
         if(updateStatus) {

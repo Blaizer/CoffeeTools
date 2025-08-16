@@ -9,7 +9,7 @@ void PatchExtension()
 {
     var extDllName = "CoffeeTools.dll";
     var extensionName = "CoffeeTools";
-    var extensionVersion = "1.3.1";
+    var extensionVersion = "1.3.2";
 
     var extension = Data.Extensions.ByName(extensionName);
     if (extension == null)

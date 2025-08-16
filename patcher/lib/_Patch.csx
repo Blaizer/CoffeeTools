@@ -2,6 +2,7 @@
 #load "_Code.csx"
 
 using System;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -62,11 +63,11 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
     using var tempDir = new TempDirectory(GetBuildDir());
     await ExportSpecificCodeToDir(Data, scriptNames, tempDir.Path, updateStatus ? "Exporting code to be patched" : null);
 
-    try {
-        await BusyBox("patch", tempDir.Path, new[] {"-R", "--dry-run", "-i", patchPath}, updateStatus);
-    } catch {
+    // try {
+    //     await BusyBox("patch", tempDir.Path, new[] {"-R", "--dry-run", "-i", patchPath}, updateStatus);
+    // } catch {
         await BusyBox("patch", tempDir.Path, new[] {"-i", patchPath}, updateStatus);
-    }
+    // }
 
     var patchedFiles = Directory.GetFiles(tempDir.Path);
     if(patchedFiles.Length != scriptNames.Count) {
@@ -76,6 +77,49 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
     await ImportCodeDir(tempDir.Path, updateStatus);
 }
 
+string RemoveNewFileDiffs(string patch)
+{
+    var sb = new StringBuilder();
+    int i = 0;
+    int length = patch.Length;
+    bool outputLine = true;
+
+    while (i < length)
+    {
+        int start = i;
+        while (i < length && patch[i++] != '\n') ;
+        string line = patch.Substring(start, i - start);
+
+        if (line.StartsWith("--- /dev/null"))
+            outputLine = false;
+        else if (line.StartsWith("--- "))
+            outputLine = true;
+
+        if (outputLine)
+            sb.Append(line);
+    }
+
+    return sb.ToString();
+}
+
+string GenerateFileList(string diff)
+{
+    var sb = new StringBuilder();
+
+    foreach (string line in diff.Split("\n"))
+    {
+        const string match = "--- original/";
+        if (line.StartsWith(match))
+        {
+            string file = line.Substring(match.Length);
+            sb.Append(file);
+            sb.Append("\n");
+        }
+    }
+
+    return sb.ToString();
+}
+
 async Task<string> GenerateCodePatch(UndertaleData patched, UndertaleData original, IList<string> scriptNames, bool updateStatus = false) {
     using(var tempDir = new TempDirectory(GetBuildDir())) {
         if(updateStatus) {
@@ -83,7 +127,7 @@ async Task<string> GenerateCodePatch(UndertaleData patched, UndertaleData origin
         }
         await ExportSpecificCodeToDir(original, scriptNames, Path.Join(tempDir.Path, "original"), updateStatus ? "Exporting original code": null);
         await ExportSpecificCodeToDir(patched, scriptNames, Path.Join(tempDir.Path, "patched"), updateStatus ? "Exporting patched code": null);
-        return await BusyBox("diff", tempDir.Path, "-a -b -B -d -N -w -r original patched".Split(' '), updateStatus, 1);
+        return RemoveNewFileDiffs(await BusyBox("diff", tempDir.Path, "-a -b -B -d -N -w -r original patched".Split(' '), updateStatus, 1));
     }
 }
 
