@@ -1,7 +1,9 @@
 [CoffeeTools Instructions]
-----------------------------
-To install the mod, use Delta Patcher to apply the [.xdelta] patch to UFO 50's [data.win] file,
-and move CoffeeTools.dll to be in the same folder as the modified [data.win].
+--------------------------
+1. Download and extract GMLoader-UFO50 version 1.1.0 or later (link at bottom of ReadMe)
+2. Copy the [CoffeeTools] folder from this zip to the [my mods] folder in GMLoader-UFO50
+3. Run [UFO 50 Mod Installer], then click [Install Mods] with CoffeeTools checked
+4. Launch UFO 50
 
  CONTROLS
 [F2] : Show/hide player 2 inputs
@@ -12,9 +14,11 @@ and move CoffeeTools.dll to be in the same folder as the modified [data.win].
 [F7] : Reset frame counter
 [F8] : Show/hide TAS frame counter
 [Number keys] : Load savestates 1-10 (Hold [Shift] to save)
+[-][+] : Decrease/increase game speed
 [Spacebar] : Enter Frame Advance Mode / Advance frame
 [Backspace] : Exit Frame Advance Mode / Toggle custom game speed
-[-][+] : Decrease/increase game speed
+[Ctrl+Spacebar] : Enter Frame Advance Mode / Exit Frame Advance Mode
+[Spacebar] (hold while running UFO 50) : Start in Frame Advance Mode
 
  TAS RECORDING AND PLAYBACK
 - Whenever you create a savestate, a recording with all your inputs up to that point is
@@ -30,14 +34,14 @@ and move CoffeeTools.dll to be in the same folder as the modified [data.win].
 - When all of your inputs have been played back, save the savestate and it'll now be ready to use again.
 
 
-[COFFEETOOLS v1.3.1] - for UFO 50 v1.7.6
+[COFFEETOOLS v1.3.2] - for UFO 50 v1.7.6
 Created by ToastGhost and Blazier.
 
 Full source code:
 https://github.com/Blaizer/CoffeeTools/
 
-Delta Patcher download:
-https://github.com/marco-calautti/DeltaPatcher/releases
+GMLoader-UFO50 download:
+https://github.com/phil-macrocheira/GMLoader-UFO50/releases/
 
 Thanks to p-sam for UFO 50 Patcher:
 https://github.com/p-sam/ufo50-mods

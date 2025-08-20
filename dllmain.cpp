@@ -11,8 +11,7 @@ YYRunnerInterface* g_pYYRunnerInterface;
 
 namespace
 {
-    constexpr char c_ExtensionName[] = "CoffeeTools";
-    constexpr char c_ExtensionVersion[] = "1.3.2";
+    #include "VersionInfo.txt"
 
     constexpr size_t c_exe_run_loop = 0x1401ceca0;
     constexpr size_t c_exe_wndproc = 0x1400d6f00;
@@ -238,7 +237,7 @@ YYEXPORT void YYExtensionInitialise(const struct YYRunnerInterface* _pFunctions,
     auto version = extGetVersion(c_ExtensionName);
     if (strncmp(version, c_ExtensionVersion, ARRAYSIZE(c_ExtensionVersion) - 1) != 0)
     {
-        YYError("Extension DLL version mismatch: expected v%s but PFO-50.dll is v%s\nMake sure you copied the matching CoffeeTools.dll into the same folder as data.win.", version, c_ExtensionVersion);
+        YYError("Extension DLL version mismatch: expected v%s but CoffeeTools.dll is v%s\nMake sure you copied the matching CoffeeTools.dll into the same folder as data.win.", version, c_ExtensionVersion);
         return;
     }
 
@@ -368,13 +367,13 @@ YYEXPORT void ct_is_ref(RValue& result, CInstance* selfinst, CInstance* otherins
 
 YYEXPORT void ct_ref_to_int64(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
-    result.val = arg[0].v64;
+    result.v64 = arg[0].v64;
     result.kind = VALUE_INT64;
 }
 
 YYEXPORT void ct_int64_to_ref(RValue& result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg)
 {
-    result.val = arg[0].v64;
+    result.v64 = arg[0].v64;
     result.kind = VALUE_REF;
 }
 

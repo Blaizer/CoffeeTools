@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 void PatchExtension()
 {
-    var extDllName = "CoffeeTools.dll";
-    var extensionName = "CoffeeTools";
-    var extensionVersion = "1.3.2";
+    var info = GetVersionInfo();
+    var extensionName = info["c_ExtensionName"];
+    var extensionVersion = info["c_ExtensionVersion"];
+    var extDllName = extensionName + ".dll";
 
     var extension = Data.Extensions.ByName(extensionName);
     if (extension == null)
@@ -81,4 +82,26 @@ void ImportSprites()
 {
     var scriptDir = Path.GetDirectoryName(GetCurrentScript());
     ImportGraphics(scriptDir, true);
+}
+
+Dictionary<string, string> GetVersionInfo()
+{
+    var scriptDir = Path.GetDirectoryName(GetCurrentScript());
+    var path = Path.Join(scriptDir, "../../VersionInfo.txt");
+    var info = new Dictionary<string, string>();
+
+    var regex = new Regex(@"(\w+)[^\w=]*=\s*""([^""]*)""");
+
+    foreach (var line in File.ReadLines(path))
+    {
+        var match = regex.Match(line);
+        if (match.Success)
+        {
+            var key = match.Groups[1].Value;
+            var value = match.Groups[2].Value;
+            info[key] = value;
+        }
+    }
+
+    return info;
 }

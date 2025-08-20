@@ -942,7 +942,7 @@ function performActions()
     {
         if (ct_keyboard_check(vk_control))
         {
-            ct_set_paused(false);
+            ct_set_paused(!ct_is_paused());
         }
         else if (ct_is_paused())
         {
@@ -1497,7 +1497,13 @@ function applyTasInputs(arg0, arg1)
         if (pressStart)    c |= int64(1) << int64(18);
         
         while (array_length(global.CT_INPUTS) < (inputFrame + 1))
-            array_push(global.CT_INPUTS, int64(0));
+        {
+            var prevInput = int64(0);
+            if (array_length(global.CT_INPUTS) > 0)
+                prevInput = global.CT_INPUTS[array_length(global.CT_INPUTS) - 1];
+
+            array_push(global.CT_INPUTS, prevInput & int64(0x9249));
+        }
         
         if (player == 1)
             global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & 4294967295) | (c << int64(32));
@@ -1513,7 +1519,7 @@ function readTasFile(arg0)
         var b = buffer_load(arg0);
         var magic = buffer_read(b, buffer_u32);
         
-        if (magic == APPEND_FILE.MAGIC)
+        if (magic == TAS_FILE.MAGIC)
         {
             var version = buffer_read(b, buffer_u32);
             var inputsLength = buffer_read(b, buffer_s32);
@@ -1614,8 +1620,8 @@ function writeTasFile(arg0)
     var inputsLength = min(global.INPUT_FRAME + 1, array_length(global.CT_INPUTS));
     var b = buffer_create(1024, buffer_grow, 1);
     buffer_fill(b, 0, buffer_u8, 0, 1024);
-    buffer_write(b, buffer_u32, APPEND_FILE.MAGIC);
-    buffer_write(b, buffer_u32, APPEND_FILE.VERSION);
+    buffer_write(b, buffer_u32, TAS_FILE.MAGIC);
+    buffer_write(b, buffer_u32, TAS_FILE.VERSION);
     buffer_write(b, buffer_s32, inputsLength);
     var randomizeLengthOffset = buffer_tell(b);
     buffer_seek(b, buffer_seek_start, 1024);
@@ -1759,6 +1765,14 @@ enum C
 enum APPEND_FILE
 {
     MAGIC = 0x46415443,
+    VERSION = 2,
+
+    HEADER_LENGTH = 1024
+}
+
+enum TAS_FILE
+{
+    MAGIC = 0x53415443,
     VERSION = 2,
 
     HEADER_LENGTH = 1024
