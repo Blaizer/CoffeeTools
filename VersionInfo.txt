@@ -1,2 +1,2 @@
 constexpr char c_ExtensionName[] = "CoffeeTools";
-constexpr char c_ExtensionVersion[] = "1.3.2";
+constexpr char c_ExtensionVersion[] = "1.3.3";
