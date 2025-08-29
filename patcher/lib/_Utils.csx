@@ -101,43 +101,27 @@ async Task<string> BusyBox(string applet, string workdir, string[] args, bool up
         SetProgressBar(null, $"$ busybox.exe {applet} {String.Join(' ', args)}", 0, 1);
     }
 
-    using (Process p = Process.Start(startInfo)) {
-        string lastFile = null;
-        var errors = new List<(string file, string line)>();
+    using(Process p = Process.Start(startInfo)) {
+        string res = null;
+        string err = null;
 
-        p.OutputDataReceived += (s, e) => {
-            if (e.Data != null && e.Data.StartsWith("patching file ")) {
-                lastFile = e.Data.Substring("patching file ".Length).Trim();
-            }
-        };
-
-        p.ErrorDataReceived += (s, e) => {
-            if (e.Data != null && e.Data.StartsWith("Hunk ")) {
-                errors.Add((lastFile ?? "<unknown file>", e.Data));
-            }
-        };
-
-        p.BeginOutputReadLine();
-        p.BeginErrorReadLine();
+        var tasks = new List<Task>();
+        tasks.Add(Task.Run(() => res = p.StandardOutput.ReadToEnd()));
+        tasks.Add(Task.Run(() => err = p.StandardError.ReadToEnd()));
+        tasks.Add(Task.Run(() => p.WaitForExit()));
         p.StandardInput.Close();
+        await Task.WhenAll(tasks);
 
-        await Task.Run(() => p.WaitForExit());
-
-        if (p.ExitCode != expectedExitCode) {
-            var msg = $"busybox '{applet}' exited with code {p.ExitCode}\n\nConflicts:\n";
-            foreach (var err in errors) {
-                msg += $"  {err.file}: {err.line}\n";
-            }
-
-            throw new ScriptException(msg);
+        if(p.ExitCode != expectedExitCode) {
+            throw new ScriptException($"busybox '{applet}' exited with code {p.ExitCode}:\n\nargs:{String.Join(' ', args)}\n\n{err}");
         }
 
         if(updateStatus) {
             IncrementProgressParallel();
         }
-    }
 
-    return null;
+        return res;
+    }
 }
 
 string[] GetConstants(UndertaleData utdata, string[] constantNames) {

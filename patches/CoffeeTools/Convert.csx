@@ -82,3 +82,6 @@ Directory.CreateDirectory(csxSubDir);
 
 var csxFile = Path.Join(csxSubDir, $"1_Patch{extensionName}.csx");
 File.WriteAllText(csxFile, $@"#load ""../../{extensionName}/patches/{extensionName}/GamePatch.csx""");
+
+var libDir = Path.Join(mainDir, "patcher", "lib");
+File.Delete(Path.Join(libDir, "busybox.exe"));

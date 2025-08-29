@@ -1,5 +1,6 @@
 #load "_Utils.csx"
 #load "_Code.csx"
+#load "_DiffPatch.csx"
 
 using System;
 using System.Text;
@@ -63,11 +64,48 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
     using var tempDir = new TempDirectory(GetBuildDir());
     await ExportSpecificCodeToDir(Data, scriptNames, tempDir.Path, updateStatus ? "Exporting code to be patched" : null);
 
-    // try {
-    //     await BusyBox("patch", tempDir.Path, new[] {"-R", "--dry-run", "-i", patchPath}, updateStatus);
-    // } catch {
-        await BusyBox("patch", tempDir.Path, new[] {"-i", patchPath}, updateStatus);
-    // }
+    // What it used to do... Maybe we could still run this and check it matches our result?
+    // await BusyBox("patch", tempDir.Path, new[] {"-i", patchPath}, updateStatus);
+
+    string diffText = File.ReadAllText(patchPath);
+    var patchFiles = DiffParserHelper.Parse(diffText);
+
+    var conflicts = new List<string>();
+
+    foreach (var patchFile in patchFiles)
+    {
+        string relativePath = patchFile.To ?? patchFile.From;
+        if (string.IsNullOrEmpty(relativePath))
+            continue;
+
+        var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        relativePath = string.Join(Path.DirectorySeparatorChar, parts, 1, parts.Length - 1);
+
+        string filePath = Path.Combine(tempDir.Path, relativePath);
+        if (!File.Exists(filePath))
+        {
+            conflicts.Add($"  {relativePath}: file not found in export dir");
+            continue;
+        }
+
+        string original = File.ReadAllText(filePath);
+        var result = PatchHelper.Patch(original, patchFile.Chunks);
+
+        if (result == null)
+        {
+            conflicts.Add($"  {relativePath}: hunk failed to match");
+        }
+        else
+        {
+            File.WriteAllText(filePath, result);
+        }
+    }
+
+    if (conflicts.Count > 0)
+    {
+        var msg = "Conflicts:\n" + string.Join("\n\n", conflicts);
+        throw new ScriptException(msg);
+    }
 
     var patchedFiles = Directory.GetFiles(tempDir.Path);
     if(patchedFiles.Length != scriptNames.Count) {
