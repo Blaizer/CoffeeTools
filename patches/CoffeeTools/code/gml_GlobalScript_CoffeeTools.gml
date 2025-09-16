@@ -206,8 +206,6 @@ function savestateSlot(arg0, arg1)
         
         if (arg0)
         {
-            global.CT_MsgText = "SLOT " + string(arg1) + " SAVED";
-            global.CT_MessageTimer = current_time + 1000;
             surface_save(frameAdvanceSurface, name + ".png");
 
             appendFileBuffer = buffer_create(real(APPEND_FILE.HEADER_LENGTH), buffer_grow, 1);
@@ -350,14 +348,14 @@ function savestateSlot(arg0, arg1)
 
             buffer_save(appendFileBuffer, name + "a.dat");
             buffer_delete(appendFileBuffer);
+            
+            global.CT_MsgText = "SLOT " + string(arg1) + " SAVED";
+            global.CT_MessageTimer = current_time + 1000;
         }
         else if (file_exists(name + ".dat"))
         {
             if (file_exists(name + "a.dat"))
             {
-                global.CT_MsgText = "SLOT " + string(arg1) + " LOADED";
-                global.CT_MessageTimer = current_time + 1000;
-                
                 //Check first if savestate being loaded is in the same game as current.
                 appendFileBuffer = 0;
                 appendFileBuffer = buffer_load(name + "a.dat");
@@ -807,6 +805,9 @@ function savestateSlot(arg0, arg1)
                     buffer_delete(tempMemoryBuffer);
                     
                     readTasFile(name + ".ctas");
+                    
+                    global.CT_MsgText = "SLOT " + string(arg1) + " LOADED";
+                    global.CT_MessageTimer = current_time + 1000;
                 }
             }
             else
