@@ -475,6 +475,7 @@ using System.Text.RegularExpressions;
         {
             var srcLines = StringHelper.SplitLines(src);
             var dstLines = new List<string>(srcLines);
+            var srcCount = dstLines.Count;
 
             var trimmedDstLines = new List<string>(dstLines.Count);
             foreach (var line in dstLines)
@@ -493,10 +494,6 @@ using System.Text.RegularExpressions;
                     {
                         trimmedSearchLines.Add(StringHelper.RemoveLeadingWhitespace(lineDiff.Content));
                     }
-                    else
-                    {
-                        break;
-                    }
                 }
 
                 if (trimmedSearchLines.Count > 0)
@@ -505,7 +502,11 @@ using System.Text.RegularExpressions;
                     var pattern = trimmedSearchLines;
 
                     bool match = false;
-                    for (int i = lineIndex; i <= source.Count - pattern.Count; i++)
+                    bool backwards = chunk.RangeInfo.OriginalRange.StartLine + chunk.RangeInfo.OriginalRange.LineCount >= srcCount;
+                    int step = backwards ? -1 : 1;
+                    int start = backwards ? source.Count - pattern.Count : lineIndex;
+                    int end = (backwards ? lineIndex : source.Count - pattern.Count) + step;
+                    for (int i = start; i != end; i += step)
                     {
                         match = true;
 

@@ -5,6 +5,7 @@
 using System;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using System.Threading.Tasks;
 
 class PatchVersionRange {
@@ -62,57 +63,105 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
     var scriptNames = _ReadScriptNamesInCodePatch(patchPath);
 
     using var tempDir = new TempDirectory(GetBuildDir());
-    await ExportSpecificCodeToDir(Data, scriptNames, tempDir.Path, updateStatus ? "Exporting code to be patched" : null);
+    var tempDirPath = tempDir.Path;
+    await ExportSpecificCodeToDir(Data, scriptNames, tempDirPath, updateStatus ? "Exporting code to be patched" : null);
 
-    // What it used to do... Maybe we could still run this and check it matches our result?
-    // await BusyBox("patch", tempDir.Path, new[] {"-i", patchPath}, updateStatus);
-
-    string diffText = File.ReadAllText(patchPath);
-    var patchFiles = DiffParserHelper.Parse(diffText);
-
-    var conflicts = new List<string>();
-
-    foreach (var patchFile in patchFiles)
     {
-        string relativePath = patchFile.To ?? patchFile.From;
-        if (string.IsNullOrEmpty(relativePath))
-            continue;
+        string diffText = File.ReadAllText(patchPath);
+        var patchFiles = DiffParserHelper.Parse(diffText);
 
-        var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        relativePath = string.Join(Path.DirectorySeparatorChar, parts, 1, parts.Length - 1);
+        var conflicts = new List<string>();
 
-        string filePath = Path.Combine(tempDir.Path, relativePath);
-        if (!File.Exists(filePath))
+        foreach (var patchFile in patchFiles)
         {
-            conflicts.Add($"  {relativePath}: file not found in export dir");
-            continue;
+            string relativePath = patchFile.To ?? patchFile.From;
+            if (string.IsNullOrEmpty(relativePath))
+                continue;
+
+            var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            relativePath = string.Join(Path.DirectorySeparatorChar, parts, 1, parts.Length - 1);
+
+            string filePath = Path.Combine(tempDirPath, relativePath);
+            if (!File.Exists(filePath))
+            {
+                conflicts.Add($"  {relativePath}: file not found in export dir");
+                continue;
+            }
+
+            string original = File.ReadAllText(filePath);
+            var result = PatchHelper.Patch(original, patchFile.Chunks);
+
+            if (result == null)
+            {
+                conflicts.Add($"  {relativePath}: hunk failed to match");
+            }
+            else
+            {
+                File.WriteAllText(filePath, result);
+            }
         }
 
-        string original = File.ReadAllText(filePath);
-        var result = PatchHelper.Patch(original, patchFile.Chunks);
-
-        if (result == null)
+        if (conflicts.Count > 0)
         {
-            conflicts.Add($"  {relativePath}: hunk failed to match");
-        }
-        else
-        {
-            File.WriteAllText(filePath, result);
+            var msg = "Conflicts:\n" + string.Join("\n\n", conflicts);
+            throw new ScriptException(msg);
         }
     }
 
-    if (conflicts.Count > 0)
+    var busyBoxPath = Path.Join(GetToolsDir(), "busybox.exe");
+    if (File.Exists(busyBoxPath))
     {
-        var msg = "Conflicts:\n" + string.Join("\n\n", conflicts);
-        throw new ScriptException(msg);
+        var tempDir2Path = Path.Join(tempDirPath, "busybox");
+        Directory.CreateDirectory(tempDir2Path);
+        await ExportSpecificCodeToDir(Data, scriptNames, tempDir2Path, updateStatus ? "Exporting code to be patched" : null);
+
+        await BusyBox("patch", tempDir2Path, new[] {"-i", patchPath}, updateStatus);
+
+        var files1 = Directory.GetFiles(tempDirPath).Select(Path.GetFileName).OrderBy(f => f);
+        var files2 = Directory.GetFiles(tempDir2Path).Select(Path.GetFileName).OrderBy(f => f);
+
+        if (!files1.SequenceEqual(files2))
+        {
+            throw new ScriptException("Diff patch didn't create the same files as busybox");
+        }
+
+        var nonMatches = new List<string>();
+        foreach (var file in files1)
+        {
+            if (!File.ReadAllBytes(Path.Combine(tempDirPath, file)).SequenceEqual(File.ReadAllBytes(Path.Combine(tempDir2Path, file))))
+            {
+                nonMatches.Add(file);
+            }
+        }
+
+        if (nonMatches.Count > 0)
+        {
+            var patchFail = Path.Join(GetBuildDir(), "patchfail");
+            var patchFail1 = Path.Join(patchFail, "diffpatch");
+            var patchFail2 = Path.Join(patchFail, "busybox");
+            Directory.CreateDirectory(patchFail);
+            Directory.CreateDirectory(patchFail1);
+            Directory.CreateDirectory(patchFail2);
+
+            var msg = "Diff patch files failed to match busybox:\n\n";
+            foreach (var file in nonMatches)
+            {
+                File.Copy(Path.Join(tempDirPath, file), Path.Join(patchFail1, file), overwrite: true);
+                File.Copy(Path.Join(tempDir2Path, file), Path.Join(patchFail2, file), overwrite: true);
+                msg += $"{file}\n";
+            }
+
+            ScriptMessage(msg);
+            tempDirPath = tempDir2Path;
+        }
     }
 
-    var patchedFiles = Directory.GetFiles(tempDir.Path);
+    var patchedFiles = Directory.GetFiles(tempDirPath);
     if(patchedFiles.Length != scriptNames.Count) {
         throw new ScriptException($"patched files count mismatch (actual = {patchedFiles.Length}; expected = {scriptNames.Count})");
     }
 
-    await ImportCodeDir(tempDir.Path, updateStatus);
+    await ImportCodeDir(tempDirPath, updateStatus);
 }
 
 string RemoveNewFileDiffs(string patch)

@@ -6,6 +6,7 @@
 using System.Threading.Tasks;
 
 var ufo50Version = GetUFO50Version(Data);
+var expectedUfo50Version = GetGameVersion();
 var scriptDir = Path.GetDirectoryName(GetCurrentScript());
 
 PatchExtension();
@@ -15,5 +16,5 @@ ImportSprites();
 ImportCode();
 
 await ApplyCompatibleCodePatch(ufo50Version, scriptDir, new[] {
-    new PatchVersionRange("1.7.6.0", "1.7.6.0")
+    new PatchVersionRange(expectedUfo50Version, expectedUfo50Version)
 }, true);

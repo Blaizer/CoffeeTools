@@ -7,20 +7,23 @@
 #include "YYRValue.h"
 #define YYEXPORT __declspec(dllexport)
 
+#include "version.h"
+
 YYRunnerInterface* g_pYYRunnerInterface;
 
 namespace
 {
-    #include "VersionInfo.txt"
+    constexpr char c_ExtensionName[] = "CoffeeTools";
+    constexpr char c_ExtensionVersion[] = MOD_VERSION;
 
-    constexpr size_t c_exe_run_loop = 0x1401ceca0;
-    constexpr size_t c_exe_wndproc = 0x1400d6f00;
-    constexpr size_t c_exe_poll_messages = 0x14071e2f0;
-    constexpr size_t c_exe_refresh_screen = 0x140009640;
-    constexpr size_t c_exe_check_audio_groups_loaded = 0x140840790;
-    constexpr size_t c_exe_update_texture_status = 0x14010d3b0;
-    constexpr size_t c_exe_perform_game_load = 0x1401c8be0;
-    constexpr size_t c_exe_yygml_exception_handler = 0x1402fbec0;
+    constexpr size_t c_exe_run_loop = 0x14017c390;
+    constexpr size_t c_exe_wndproc = 0x1400b7ab0;
+    constexpr size_t c_exe_poll_messages = 0x1403a0520;
+    constexpr size_t c_exe_refresh_screen = 0x140009c60;
+    constexpr size_t c_exe_check_audio_groups_loaded = 0x140494120;
+    constexpr size_t c_exe_update_texture_status = 0x1400e2b80;
+    constexpr size_t c_exe_perform_game_load = 0x140177e20;
+    constexpr size_t c_exe_yygml_exception_handler = 0x14028c480;
 
     YYRunnerInterface g_runnerInterface;
     CInstance* g_selfinst;

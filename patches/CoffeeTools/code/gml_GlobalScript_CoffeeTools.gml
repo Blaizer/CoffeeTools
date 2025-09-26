@@ -1454,16 +1454,16 @@ function applyTasInputs(arg0, arg1)
 
         holdUp        = (c & (int64(1) << int64(0))) != 0;
         pressUp       = (c & (int64(1) << int64(1))) != 0;
-        releaseUp     = (c & (int64(1) << int64(2))) != 0;
+
         holdDown      = (c & (int64(1) << int64(3))) != 0;
         pressDown     = (c & (int64(1) << int64(4))) != 0;
-        releaseDown   = (c & (int64(1) << int64(5))) != 0;
+
         holdLeft      = (c & (int64(1) << int64(6))) != 0;
         pressLeft     = (c & (int64(1) << int64(7))) != 0;
-        releaseLeft   = (c & (int64(1) << int64(8))) != 0;
+
         holdRight     = (c & (int64(1) << int64(9))) != 0;
         pressRight    = (c & (int64(1) << int64(10))) != 0;
-        releaseRight  = (c & (int64(1) << int64(11))) != 0;
+
         fire1         = (c & (int64(1) << int64(12))) != 0;
         fire1pressed  = (c & (int64(1) << int64(13))) != 0;
         fire1released = (c & (int64(1) << int64(14))) != 0;
@@ -1478,16 +1478,16 @@ function applyTasInputs(arg0, arg1)
 
         if (holdUp)        c |= int64(1) << int64(0);
         if (pressUp)       c |= int64(1) << int64(1);
-        if (releaseUp)     c |= int64(1) << int64(2);
+
         if (holdDown)      c |= int64(1) << int64(3);
         if (pressDown)     c |= int64(1) << int64(4);
-        if (releaseDown)   c |= int64(1) << int64(5);
+
         if (holdLeft)      c |= int64(1) << int64(6);
         if (pressLeft)     c |= int64(1) << int64(7);
-        if (releaseLeft)   c |= int64(1) << int64(8);
+
         if (holdRight)     c |= int64(1) << int64(9);
         if (pressRight)    c |= int64(1) << int64(10);
-        if (releaseRight)  c |= int64(1) << int64(11);
+
         if (fire1)         c |= int64(1) << int64(12);
         if (fire1pressed)  c |= int64(1) << int64(13);
         if (fire1released) c |= int64(1) << int64(14);
@@ -1773,7 +1773,7 @@ enum APPEND_FILE
 enum TAS_FILE
 {
     MAGIC = 0x53415443,
-    VERSION = 2,
+    VERSION = 3,
 
     HEADER_LENGTH = 1024
 }

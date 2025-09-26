@@ -34,7 +34,7 @@
 - When all of your inputs have been played back, save the savestate and it'll now be ready to use again.
 
 
-[COFFEETOOLS v1.3.2] - for UFO 50 v1.7.6
+[COFFEETOOLS v1.3.4] - for UFO 50 v1.7.8.21
 Created by ToastGhost and Blazier.
 
 Full source code:
@@ -44,4 +44,4 @@ GMLoader-UFO50 download:
 https://github.com/phil-macrocheira/GMLoader-UFO50/releases/
 
 Thanks to p-sam for UFO 50 Patcher:
-https://github.com/p-sam/ufo50-mods
+https://github.com/p-sam/ufo50-patcher

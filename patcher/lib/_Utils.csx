@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using UndertaleModLib.Util;
 
@@ -35,6 +36,16 @@ string GetVersionDir(string version) {
 
 string GetVersionDir(Version version) {
     return GetVersionDir(version.ToString());
+}
+
+string GetRootDir()
+{
+    return PathResolve(GetToolsDir(), "../..");
+}
+
+string GetMergeDir()
+{
+    return PathResolve(GetBuildDir(), "merge");
 }
 
 class TempDirectory : IDisposable {
@@ -91,7 +102,9 @@ async Task<string> BusyBox(string applet, string workdir, string[] args, bool up
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         RedirectStandardInput = true,
-        WorkingDirectory = workdir
+        WorkingDirectory = workdir,
+        StandardOutputEncoding = Encoding.UTF8,
+        StandardErrorEncoding = Encoding.UTF8
     };
 
     startInfo.ArgumentList.Add(applet);
@@ -143,4 +156,31 @@ string[] GetConstants(UndertaleData utdata, string[] constantNames) {
     }
 
     throw new ScriptException("Could not find constants");
+}
+
+Dictionary<string, string> GetVersionDefines()
+{
+    var versionFile = PathResolve(GetRootDir(), "version.h");
+    var defines = new Dictionary<string, string>();
+    foreach (var line in File.ReadLines(versionFile))
+    {
+        var parts = line.Trim().Split(new[] { ' ', '\t' }, 3, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 3 && parts[0] == "#define")
+        {
+            defines[parts[1]] = parts[2].Trim('"');
+        }
+    }
+    return defines;
+}
+
+string GetModVersion()
+{
+    var defines = GetVersionDefines();
+    return $"{defines["MOD_VERSION_MAJOR"]}.{defines["MOD_VERSION_MINOR"]}.{defines["MOD_VERSION_BUILD"]}";
+}
+
+string GetGameVersion()
+{
+    var defines = GetVersionDefines();
+    return $"{defines["GAME_VERSION_MAJOR"]}.{defines["GAME_VERSION_MINOR"]}.{defines["GAME_VERSION_BUILD"]}.{defines["GAME_VERSION_REVSN"]}";
 }

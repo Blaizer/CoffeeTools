@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 void PatchExtension()
 {
-    var info = GetVersionInfo();
-    var extensionName = info["c_ExtensionName"];
-    var extensionVersion = info["c_ExtensionVersion"];
+    var extensionName = "CoffeeTools";
+    var extensionVersion = GetModVersion();
+    var gameVersion = GetGameVersion();
     var extDllName = extensionName + ".dll";
 
     var extension = Data.Extensions.ByName(extensionName);
@@ -39,6 +39,21 @@ void PatchExtension()
                 }
             }
         }
+    }
+
+    {
+        void DefineExtensionOption(string name, string value)
+        {
+            var option = new UndertaleExtensionOption()
+            {
+                Name = Data.Strings.MakeString(name),
+                Value = Data.Strings.MakeString(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value))),
+                Kind = UndertaleExtensionOption.OptionKind.String,
+            };
+            extension.Options.Add(option);
+        }
+
+        DefineExtensionOption("gameVersion", gameVersion);
     }
 
     {
@@ -82,26 +97,4 @@ void ImportSprites()
 {
     var scriptDir = Path.GetDirectoryName(GetCurrentScript());
     ImportGraphics(scriptDir, true);
-}
-
-Dictionary<string, string> GetVersionInfo()
-{
-    var scriptDir = Path.GetDirectoryName(GetCurrentScript());
-    var path = Path.Join(scriptDir, "../../VersionInfo.txt");
-    var info = new Dictionary<string, string>();
-
-    var regex = new Regex(@"(\w+)[^\w=]*=\s*""([^""]*)""");
-
-    foreach (var line in File.ReadLines(path))
-    {
-        var match = regex.Match(line);
-        if (match.Success)
-        {
-            var key = match.Groups[1].Value;
-            var value = match.Groups[2].Value;
-            info[key] = value;
-        }
-    }
-
-    return info;
 }
