@@ -687,6 +687,24 @@ function savestateSlot(arg0, arg1)
                                 return false;
                         };
                     }
+                    with (o10__Item) //Porgy items
+                    {
+                        set_depth = function()
+                        {
+                            if (!place_meeting(x, y, obj_floor))
+                                depth = 500;
+                            else
+                                depth = 1500;
+                        };
+                    }
+                    with (o31_Mas) //Elfazar's Hat master
+                    {
+                        update_depth = function(arg0)
+                        {
+                            with (o31__Destructible)
+                                depth = -(y - arg0) + 50;
+                        };
+                    }
                     with (o35_iSpellWall) //Valbrace spell wall
                     {
                         scrGetRandomState = function()
@@ -782,7 +800,87 @@ function savestateSlot(arg0, arg1)
                             }
                         };
                     }
-                    
+                    with(o48_Hazard) //Planet Zoldath hazards
+                    {
+                        destroy_if_overlapping = function()
+                        {
+                            if (instance_place(x, y - 16, oJTopDown_Wall))
+                                instance_destroy();
+                            else if (instance_place(x, y - 32, o48_Entrance))
+                                instance_destroy();
+                        };
+                        
+                        get_exploded = function()
+                        {
+                            if (portal)
+                                exit;
+                            
+                            if (noPortalTimer)
+                                exit;
+                            
+                            with (o48_Hazard)
+                            {
+                                image_index = 0;
+                                image_speed = 0;
+                                portal = false;
+                            }
+                            
+                            portal = true;
+                            image_speed = 0.1;
+                            var loops = 0;
+                            
+                            do
+                            {
+                                linkedPortal = instance_find(o48_Hazard, scrIRandomRange(0, instance_number(o48_Hazard) - 1));
+                                loops++;
+                                
+                                if (loops >= 10)
+                                    portal = false;
+                            }
+                            until (linkedPortal != id && (linkedPortal.xPos != xPos || linkedPortal.yPos != yPos));
+                            
+                            linkedPortal.portal = true;
+                            linkedPortal.linkedPortal = id;
+                            linkedPortal.image_speed = 0.1;
+                        };
+                    }
+                    with (o48_Hole) //Planet Zoldath holes
+                    {
+                        initialize = function()
+                        {
+                            if (instance_place(x, y - 16, o48__Obstacle) && !instance_place(x, y - 16, o48_UFO))
+                            {
+                                instance_destroy();
+                                exit;
+                            }
+                            
+                            if (!instance_place(x, y + 16, o48_Hole) && !instance_place(x, y + 16, o48_HoleNotObstacle))
+                            {
+                                instance_create(x, y, o48_HoleNotObstacle);
+                                instance_destroy();
+                                exit;
+                            }
+                            
+                            if (!instance_place(x, y - 16, o48_Hole))
+                                image_index = 0;
+                        };
+                    }
+                    with (o48_Tree) //Planet Zoldath trees
+                    {
+                        get_exploded = function()
+                        {
+                            scrFX(s48_EnemyDie, 0.3, x + 16, y + 24);
+                            instance_destroy();
+                        };
+                    }
+                    with (o48_TreeSmall) //Planet Zoldath small trees
+                    {
+                        get_exploded = function()
+                        {
+                            scrFX(s48_EnemyDie, 0.3, x + 8, y + 16);
+                            instance_destroy();
+                        };
+                    }
                     //Read CoffeeTools preferences and other unchanging variables from temp buffer
                     buffer_seek(tempMemoryBuffer, buffer_seek_start, 0);
                     count = buffer_read(tempMemoryBuffer, buffer_u32);
@@ -1367,7 +1465,7 @@ function drawToolsText()
             }
         }
         
-        draw_sprite(s39_Cursor, 0, debugCursorX, debugCursorY);
+        draw_point(debugCursorX, debugCursorY);
         
     }
 
