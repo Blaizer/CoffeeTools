@@ -1,3 +1,26 @@
+--- original/gml_GlobalScript_rng_random.gml
++++ patched/gml_GlobalScript_rng_random.gml
+@@ -2,5 +2,7 @@
+ {
+     global.rng_state_1 = (65192 * (global.rng_state_1 & 65535)) + ((global.rng_state_1 & 4294901760) >> 16);
+     global.rng_state_2 = (64473 * (global.rng_state_2 & 65535)) + ((global.rng_state_2 & 4294901760) >> 16);
++    global.rng_display_count++;
++    global.rng_display_count_flash = 15;
+     return (((global.rng_state_1 & 65535) << 16) + global.rng_state_2) & 4294967295;
+ }
+--- original/gml_GlobalScript_rng_seed.gml
++++ patched/gml_GlobalScript_rng_seed.gml
+@@ -3,6 +3,10 @@
+     var mask = 1431655765;
+     global.rng_state_1 = 1253089769 ^ (argument[0] & mask);
+     global.rng_state_2 = 2342871706 ^ (argument[0] & ~mask);
++    global.rng_display_seed = argument[0];
++    global.rng_display_seed_flash = 15;
++    global.rng_display_count = 0;
++    global.rng_display_count_prev = 0;
+     repeat (20)
+     {
+         rng_random();
 --- original/gml_GlobalScript_scrFFrame.gml
 +++ patched/gml_GlobalScript_scrFFrame.gml
 @@ -6,5 +6,5 @@
@@ -123,17 +146,29 @@
      global.PLAT_STEAM = 0;
      global.PLAT_SWITCH = 1;
      global.PLAT_PS4 = 2;
+--- original/gml_GlobalScript_scrInitRandomness.gml
++++ patched/gml_GlobalScript_scrInitRandomness.gml
+@@ -2,5 +2,10 @@
+ {
+     global.rng_state_1 = -1;
+     global.rng_state_2 = -1;
++    global.rng_display_seed = "";
++    global.rng_display_seed_flash = 0;
++    global.rng_display_count = 0;
++    global.rng_display_count_flash = 0;
++    global.rng_display_count_prev = 0;
+     scrRandomize(0);
+ }
 --- original/gml_GlobalScript_scrPause.gml
 +++ patched/gml_GlobalScript_scrPause.gml
-@@ -6,6 +6,8 @@
+@@ -6,7 +6,6 @@
      }
      global.paused = true;
      global.prePauseFont = global.currFont;
-+    global.prePauseFPS = game_get_speed(gamespeed_fps);
-+    display_reset(0, true);
-     game_set_speed(60, gamespeed_fps);
+-    game_set_speed(60, gamespeed_fps);
      scrSaveTimePlayed();
      if (audio_exists(global.SFX))
+     {
 --- original/gml_GlobalScript_scrPlayGame.gml
 +++ patched/gml_GlobalScript_scrPlayGame.gml
 @@ -23,7 +23,10 @@
@@ -215,20 +250,6 @@
      }
      else
      {
---- original/gml_GlobalScript_scrUnpause.gml
-+++ patched/gml_GlobalScript_scrUnpause.gml
-@@ -5,6 +5,11 @@
-         exit;
-     }
-     global.paused = false;
-+    if (global.prePauseFPS > 60)
-+    {
-+        display_reset(0, false);
-+    }
-+    game_set_speed(global.prePauseFPS, gamespeed_fps);
-     scrSetFont(global.prePauseFont);
-     if (audio_exists(global.SFX))
-     {
 --- original/gml_GlobalScript_scrWin.gml
 +++ patched/gml_GlobalScript_scrWin.gml
 @@ -16,6 +16,10 @@
@@ -302,9 +323,9 @@
 +global.CT_BlockSaves = false;
 +global.CT_FeedbackMessages = true;
 +global.CT_TARGET_FPS = 60;
-+global.prePauseFPS = 60;
 +global.FRAME_COUNT = 0;
 +global.CT_ShowFrameCounter = false;
++global.CT_ShowRNG = true;
 +global.CT_INPUTS = array_create(0);
 +global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS);
 +global.CT_RANDOMIZE_TABLE = array_create(0);

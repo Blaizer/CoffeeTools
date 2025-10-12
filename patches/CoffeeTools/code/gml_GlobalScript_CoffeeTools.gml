@@ -24,32 +24,28 @@ function displayReset()
 
 function modifyFps(arg0, arg1)
 {
-    if (!global.paused)
+    if (arg0)
     {
-        if (arg0)
-        {
-            if (global.STANDARD_FPS == 60)
-                global.STANDARD_FPS = global.CT_TARGET_FPS;
-            else
-                global.STANDARD_FPS = 60;
-        }
-        
-        if (arg1 != 0)
-        {
-            var list = [5, 10, 15, 20, 30, 40, 48, 60, 90, 120, 180, 240, 480, 960, 1920];
-            var index = arrayGetIndex(list, global.STANDARD_FPS);
-            
-            if (index != -1 && (index + arg1) >= 0 && (index + arg1) < array_length(list))
-            {
-                global.STANDARD_FPS = list[index + arg1];
-                global.CT_TARGET_FPS = global.STANDARD_FPS;
-            }
-        }
-        
-        displayReset();
-        
-        game_set_speed(global.STANDARD_FPS, gamespeed_fps);
+        if (global.STANDARD_FPS == 60)
+            global.STANDARD_FPS = global.CT_TARGET_FPS;
+        else
+            global.STANDARD_FPS = 60;
     }
+    
+    if (arg1 != 0)
+    {
+        var list = [5, 10, 15, 20, 30, 40, 48, 60, 90, 120, 180, 240, 480, 960, 1920];
+        var index = arrayGetIndex(list, global.STANDARD_FPS);
+        
+        if (index != -1 && (index + arg1) >= 0 && (index + arg1) < array_length(list))
+        {
+            global.STANDARD_FPS = list[index + arg1];
+            global.CT_TARGET_FPS = global.STANDARD_FPS;
+        }
+    }
+    
+    displayReset();
+    game_set_speed(global.STANDARD_FPS, gamespeed_fps);
 }
 
 // Called exactly once per frame from CoffeeTools.dll at the very start of the frame, to increment any reliable counters.
@@ -60,6 +56,7 @@ function incrementFrame()
 
     global.INPUT_FRAME++;
     global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS);
+    global.rng_display_count_prev = global.rng_display_count;
 }
 
 // Recursive function. Makes sure variable and any array entries are all able to be written to buffer.
@@ -1033,7 +1030,12 @@ function performActions()
     {
         global.CT_ShowTasFrameCounter = !global.CT_ShowTasFrameCounter;
     }
-
+    
+    if (ct_keyboard_check_pressed(vk_f9))
+    {
+        global.CT_ShowRNG = !global.CT_ShowRNG;
+    }
+    
     var resetSpeed = false;
     var changeSpeed = 0;
 
@@ -1491,9 +1493,7 @@ function drawToolsText()
     else if (global.STANDARD_FPS != 60)
     {
         draw_set_color(global.palette[2]);
-        
-        if (!global.paused)
-            draw_text(0, 209, string(global.STANDARD_FPS) + " FPS");
+        draw_text(0, 209, string(global.STANDARD_FPS) + " FPS");
     }
     
     var rightSideOffset = 0;
@@ -1522,6 +1522,39 @@ function drawToolsText()
         draw_text(384, 209 - rightSideOffset, global.FRAME_COUNT);
         rightSideOffset += 8;
         draw_set_halign(fa_left);
+    }
+    
+    if (global.CT_ShowRNG)
+    {
+        draw_sprite(sRNGIcons, 0, 0, 0);
+        draw_sprite(sRNGIcons, 1, 0, 8);
+        
+        if (global.rng_display_seed_flash > 0)
+        {
+            draw_set_color(global.palette[2]);
+            global.rng_display_seed_flash--;
+        }
+        else
+        {
+            draw_set_color(global.palette[0]);
+        }
+        
+        draw_text(8, 0, global.rng_display_seed);
+        
+        if (global.rng_display_count_flash > 0)
+        {
+            draw_set_color(global.palette[2]);
+            global.rng_display_count_flash--;
+        }
+        else
+        {
+            draw_set_color(global.palette[0]);
+        }
+        
+        if (global.rng_display_count_prev != global.rng_display_count)
+            draw_text(8, 8, string(global.rng_display_count) + " (+" + string(global.rng_display_count - global.rng_display_count_prev) + ")");
+        else
+            draw_text(8, 8, global.rng_display_count);
     }
     
     if (global.CT_BlockSaves)
