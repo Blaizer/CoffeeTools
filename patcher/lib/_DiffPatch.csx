@@ -506,23 +506,26 @@ using System.Text.RegularExpressions;
                     int step = backwards ? -1 : 1;
                     int start = backwards ? source.Count - pattern.Count : lineIndex;
                     int end = (backwards ? lineIndex : source.Count - pattern.Count) + step;
-                    for (int i = start; i != end; i += step)
+                    if (backwards ? start > end : end > start)
                     {
-                        match = true;
-
-                        for (int j = 0; j < pattern.Count; j++)
+                        for (int i = start; i != end; i += step)
                         {
-                            if (source[i + j] != pattern[j])
+                            match = true;
+
+                            for (int j = 0; j < pattern.Count && i + j < source.Count; j++)
                             {
-                                match = false;
+                                if (source[i + j] != pattern[j])
+                                {
+                                    match = false;
+                                    break;
+                                }
+                            }
+
+                            if (match)
+                            {
+                                lineIndex = i;
                                 break;
                             }
-                        }
-
-                        if (match)
-                        {
-                            lineIndex = i;
-                            break;
                         }
                     }
 

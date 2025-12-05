@@ -103,7 +103,7 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
 
         if (conflicts.Count > 0)
         {
-            var msg = "Conflicts:\n" + string.Join("\n\n", conflicts);
+            var msg = "Conflicts:\n" + string.Join("\n", conflicts);
             throw new ScriptException(msg);
         }
     }
@@ -164,7 +164,7 @@ async Task ApplyCodePatch(string patchPath, bool updateStatus = false) {
     await ImportCodeDir(tempDirPath, updateStatus);
 }
 
-string RemoveNewFileDiffs(string patch)
+string RemoveNewFileDiffs(string patch, string startRemoving = "--- /dev/null", string stopRemoving = "--- ")
 {
     var sb = new StringBuilder();
     int i = 0;
@@ -177,9 +177,9 @@ string RemoveNewFileDiffs(string patch)
         while (i < length && patch[i++] != '\n') ;
         string line = patch.Substring(start, i - start);
 
-        if (line.StartsWith("--- /dev/null"))
+        if (line.StartsWith(startRemoving))
             outputLine = false;
-        else if (line.StartsWith("--- "))
+        else if (line.StartsWith(stopRemoving))
             outputLine = true;
 
         if (outputLine)

@@ -25,7 +25,7 @@
 +++ patched/gml_GlobalScript_scrFFrame.gml
 @@ -6,5 +6,5 @@
      }
-     var fframe = instance_create(x, y, oFFrame);
+     var fframe = instance_create_depth(x, y, 0, oFFrame);
      fframe.fSpeed = game_get_speed(gamespeed_fps);
 -    game_set_speed(arg0, gamespeed_fps);
 +    game_set_speed((arg0 * global.STANDARD_FPS) / 60, gamespeed_fps);
@@ -79,7 +79,7 @@
          {
              pressRight = 1;
          }
-@@ -115,19 +116,19 @@
+@@ -115,10 +116,10 @@
      {
          fire1 = keyboard_check(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check(_slot, global.joyMap[arg0][global.INP_FIRE1]);
          fire2 = keyboard_check(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check(_slot, global.joyMap[arg0][global.INP_FIRE2]);
@@ -94,20 +94,22 @@
      }
      else
      {
-         fire1 = keyboard_check(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check(_slot, gp_face2) || gamepad_button_check(_slot, gp_face3);
-         fire2 = keyboard_check(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check(_slot, gp_face1) || gamepad_button_check(_slot, gp_face4);
--        fire1pressed = keyboard_check_pressed(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_pressed(_slot, gp_face2) || gamepad_button_check_pressed(_slot, gp_face3);
--        fire2pressed = keyboard_check_pressed(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_pressed(_slot, gp_face1) || gamepad_button_check_pressed(_slot, gp_face4);
--        fire1released = keyboard_check_released(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_released(_slot, gp_face2) || gamepad_button_check_released(_slot, gp_face3);
--        fire2released = keyboard_check_released(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_released(_slot, gp_face1) || gamepad_button_check_released(_slot, gp_face4);
-+        fire1pressed = keyboard_check_pressed_verify(arg0, global.INP_FIRE1) || gamepad_button_check_pressed_verify_2(_slot, arg0, 32770, global.INP_FIRE1) || gamepad_button_check_pressed_verify_2(_slot, arg0, 32771, global.INP_FIRE1 + 2);
-+        fire2pressed = keyboard_check_pressed_verify(arg0, global.INP_FIRE2) || gamepad_button_check_pressed_verify_2(_slot, arg0, 32769, global.INP_FIRE2) || gamepad_button_check_pressed_verify_2(_slot, arg0, 32772, global.INP_FIRE2 + 2);
-+        fire1released = keyboard_check_released_verify(arg0, global.INP_FIRE1) || gamepad_button_check_released_verify_2(_slot, arg0, 32770, global.INP_FIRE1) || gamepad_button_check_released_verify_2(_slot, arg0, 32771, global.INP_FIRE1 + 2);
-+        fire2released = keyboard_check_released_verify(arg0, global.INP_FIRE2) || gamepad_button_check_released_verify_2(_slot, arg0, 32769, global.INP_FIRE2) || gamepad_button_check_released_verify_2(_slot, arg0, 32772, global.INP_FIRE2 + 2);
+@@ -138,10 +139,10 @@
+         }
+         fire1 = keyboard_check(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check(_slot, global.joyMap[arg0][global.INP_FIRE1]) || gamepad_button_check(_slot, global.altFire1[arg0]);
+         fire2 = keyboard_check(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check(_slot, global.joyMap[arg0][global.INP_FIRE2]) || gamepad_button_check(_slot, global.altFire2[arg0]);
+-        fire1pressed = keyboard_check_pressed(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_pressed(_slot, global.joyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_pressed(_slot, global.altFire1[arg0]);
+-        fire2pressed = keyboard_check_pressed(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_pressed(_slot, global.joyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_pressed(_slot, global.altFire2[arg0]);
+-        fire1released = keyboard_check_released(global.keyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_released(_slot, global.joyMap[arg0][global.INP_FIRE1]) || gamepad_button_check_released(_slot, global.altFire1[arg0]);
+-        fire2released = keyboard_check_released(global.keyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_released(_slot, global.joyMap[arg0][global.INP_FIRE2]) || gamepad_button_check_released(_slot, global.altFire2[arg0]);
++        fire1pressed = keyboard_check_pressed_verify(arg0, global.INP_FIRE1) || gamepad_button_check_pressed_verify(_slot, arg0, global.INP_FIRE1) || gamepad_button_check_pressed_verify_2(_slot, arg0, global.altFire1[arg0], global.INP_FIRE1 + 2);
++        fire2pressed = keyboard_check_pressed_verify(arg0, global.INP_FIRE2) || gamepad_button_check_pressed_verify(_slot, arg0, global.INP_FIRE2) || gamepad_button_check_pressed_verify_2(_slot, arg0, global.altFire2[arg0], global.INP_FIRE2 + 2);
++        fire1released = keyboard_check_released_verify(arg0, global.INP_FIRE1) || gamepad_button_check_released_verify(_slot, arg0, global.INP_FIRE1) || gamepad_button_check_released_verify_2(_slot, arg0, global.altFire1[arg0], global.INP_FIRE1 + 2);
++        fire2released = keyboard_check_released_verify(arg0, global.INP_FIRE2) || gamepad_button_check_released_verify(_slot, arg0, global.INP_FIRE2) || gamepad_button_check_released_verify_2(_slot, arg0, global.altFire2[arg0], global.INP_FIRE2 + 2);
      }
      pressStart = keyboard_check_pressed(global.keyMap[arg0][global.INP_START]) || gamepad_button_check_pressed(_slot, global.joyMap[arg0][global.INP_START]) || keyboard_check_pressed(vk_escape);
      if (holdLeft && holdRight)
-@@ -169,4 +170,5 @@
+@@ -183,4 +184,5 @@
      {
          global.inputFocus = 2;
      }
@@ -138,14 +140,14 @@
 @@ -1,5 +1,10 @@
  function scrInit()
  {
-+    global.CT_ALL_GLOBAL_VARIABLES = ["ACCOUNT_FILE", "accountSaveData", "ach", "ACH_ALL", "ACH_CHERRY_1", "ACH_CHERRY_10", "ACH_CHERRY_15", "ACH_CHERRY_2", "ACH_CHERRY_20", "ACH_CHERRY_3", "ACH_CHERRY_30", "ACH_CHERRY_4", "ACH_CHERRY_40", "ACH_CHERRY_5", "ACH_CHERRY_50", "ACH_GOLD_1", "ACH_GOLD_10", "ACH_GOLD_15", "ACH_GOLD_2", "ACH_GOLD_20", "ACH_GOLD_3", "ACH_GOLD_30", "ACH_GOLD_4", "ACH_GOLD_40", "ACH_GOLD_5", "ACH_GOLD_50", "ACH_OPEN_1", "ACH_OPEN_25", "ACH_OPEN_50", "ACH_SCORE_ANY", "ACH_SCORE_FIRST", "ACH_SCORE_TOP_3", "ACH_TERMINAL", "ACH_TIER_BRONZE", "ACH_TIER_GOLD", "ACH_TIER_NONE", "ACH_TIER_PLATINUM", "ACH_TIER_SILVER", "ACH_TOTAL", "achDesc", "achName", "achTier", "all50", "AM_LIB_TIME", "AM_LIB_TIME_PER_GAME", "amFire1", "amFire1pressed", "amFire1released", "amFire2", "amFire2pressed", "amFire2released", "amHoldDown", "amHoldLeft", "amHoldRight", "amHoldUp", "amPressDown", "amPressLeft", "amPressRight", "amPressUp", "ARCADE_MODE_PROFILE", "arcadeCabinetConfig", "arcadeCabinetMode", "attractMode", "attractModeIndex", "attractModeLibrary", "attractModeLibraryTimer", "attractModePlaylist", "AUDIO_BGM_TOGGLE", "AUDIO_SFX_TOGGLE", "AUDIO_VOLUME", "AUDIO_VOLUME_DB_SCALING", "AUDIOGROUP_BGM", "AUDIOGROUP_SFX", "BACKUP_MINIMUM_TIME", "backupSaveNum", "backupTimer", "BG_BLOOD", "BG_BLUE_SKY", "BG_CERAMIC", "BG_CHERRY", "BG_DISPLAY_NAME", "BG_GOLD", "BG_GOLF", "BG_INDIGO", "BG_INFINITY", "BG_LEMON", "BG_MAIN_COLOR", "BG_MAIN_IMG", "BG_SHADOW_IMG", "BG_TAB_IMG", "BG_TANGERINE", "BGM", "BGM_BASE_LEVEL", "bufferSurface", "canDoShaders", "CARRIAGE_RETURN", "CARRIAGE_RETURN_SIMPLIFIED", "cheatedBypassTitle", "cheatedNoLoad", "cheatedNoSave", "cheatedNumPlayers", "cheatID", "CHERRY_WIN", "CHERRY_WIN_FAST", "cherryTimeAll", "cherryWins", "CONFIG_BACKUP", "CONFIG_FILE", "configSaveData", "crashToTerminal", "CRTScaleMax", "currCutscene", "currFile", "currFileName", "currFont", "currGame", "currGameID", "currGardenWin", "currProfileSaveData", "currProfileSaveNum", "currWin", "CUSTOM_ACHIEVEMENT_NOTIFICATIONS", "debugOn", "decoding", "deepestFloor", "DEFAULT_AUDIO_VOLUME", "DEFAULT_JOY", "DEFAULT_KEY", "DEFAULT_SCALE", "defaultLanguage", "dispBordered", "doubledUpButtons", "drawLibraryBG", "encoding", "EXCLUDE_ABSENT_GAMES", "EXTERNAL_TEXT_ERROR", "EXTERNAL_TEXT_FILE", "fontAlien", "fontAvianos", "fontBigWestern", "fontBlocky", "fontBlockyTall", "fontCrackBig", "fontCrackHeader", "fontCrackSmall", "fontDefault", "fontDefault_JP", "fontDefaultNoShadow", "fontDefaultNoShadow_JP", "fontDigital", "fontDigital2", "fontDigitalBig", "fontDigitalMini", "fontDotMatrix", "fontFancyShort", "fontGradient", "fontGrimstone", "fontHandwriting", "fontKanji12", "fontNoShadow", "fontTall", "fontTallBG", "fontTerminal", "fontThinOutline", "fontUFO", "fullscreen", "g03_bonus", "g03_gardenThresh", "g03_highestShipCount", "g03_justLaunched", "g03_lives", "g03_score", "g03_timeMin", "g03_timeSec", "g03_totalCrashes", "g03_totalFuelUse", "g06_freeLook", "g06_golfX", "g06_golfY", "g06_golfZ", "g06_th", "g06_tw", "g06_tx", "g06_ty", "g07_bestTime", "g07_totalCollectibleCount", "g07_totalDeathCount", "g07_totalKillCount", "g07_totalLeechCount", "g07_totalRoomCount", "g07_totalTime", "g11_bgmTrig", "g11_collectionEgg", "g11_input", "g11_launch", "g11_level", "g11_levelsVisited", "g11_metaTrigger", "g11_transition", "g15_QuickRestart", "g16_bossClear", "g16_camera_mode", "g16_camera_mode_stored", "g16_cs", "g16_gameStart", "g16_levelSelectState", "g16_lvClear", "g16_lvCurr", "g16_lvCurrTime", "g16_lvTime", "g16_tankCurr", "g16_tankPrev", "g16_xCam", "g16_xCamMax", "g16_xCamMin", "g16_xCP", "g16_xHub", "g16_yCam", "g16_yCamMax", "g16_yCamMin", "g16_yCP", "g16_yHub", "g17_pType", "g19_alive", "g19_cash", "g19_chestOpen", "g19_dataLoaded", "g19_doorOpen", "g19_dsItem", "g19_emblem", "g19_experience", "g19_invEquip", "g19_invStock", "g19_invUses", "g19_level", "g19_life", "g19_lizName", "g19_maxDepth", "g19_misty", "g19_pearlContent", "g19_pearlCount", "g19_relicStock", "g19_spawndir", "g19_spawnmode", "g19_spawnroom", "g19_xspawn", "g19_yspawn", "g22_enforceRules", "g22_scoreGoal", "g22_speed", "g22_speedR", "g22_timeActive", "g22_timeLimit", "g22_weaponTap", "g23_bestScore", "g23_currStage", "g23_golferUsage", "g23_holeInOnes", "g23_menu", "g23_mostHoleInOnes", "g23_playerGolfer", "g23_scoreArray", "g24_deaths", "g24_score", "g24_scoreDrop", "g24_time", "g24_warp", "g24_xSpawn", "g24_ySpawn", "g31_cheat", "g31_deathcount", "g31_fewestDeaths", "g31_furthestStage", "g31_intro", "g31_level", "g31_life", "g31_map", "g31_mostTicketsFound", "g31_power1", "g31_power2", "g31_power3", "g31_power4", "g31_power5", "g31_powerup", "g31_shotcount", "g31_ticket", "g31_ticketsFound", "g34_gardenGoal", "g34_killStreak", "g34_life", "g34_loop", "g34_sandwichesEaten", "g34_score", "g34_totalKills", "g35_tx", "g35_ty", "g38_coin", "g38_fuel", "g38_fuelMax", "g38_furthestLevel", "g38_hudItem", "g38_hudItemCount", "g38_item", "g38_itemBought", "g38_level", "g38_lights", "g38_lives", "g38_livesMax", "g38_magnets", "g38_mostScrolls", "g38_orbs", "g38_path", "g38_sagePath", "g38_shopRand", "g38_shortcut", "g44_intro", "g44_xMap", "g44_yMap", "g46_continues", "g46_extchain", "g46_extscore", "g46_justLaunched", "g46_letters", "g46_map", "g46_nohit", "g46_photochain", "g46_photoImage", "g46_photoSprite", "g46_practice", "g46_score", "g46_scoretop", "g46_secretPhotos", "GARDEN_WIN", "GARDEN_WIN_FAST", "gardenWins", "GENERIC_WIN", "GENRE_NAMES", "GOLD_WIN", "GOLD_WIN_FAST", "goldTimeAll", "goldWins", "gv08_debugMax", "gv08_intro", "gv08_lives", "gv08_score", "gv08_stage", "gv08_stage_highest", "gv08_wave", "gv45_stage", "halfTime", "INP_DOWN", "INP_FIRE1", "INP_FIRE2", "INP_LEFT", "INP_RIGHT", "INP_START", "INP_TYPE_HOLD", "INP_TYPE_PRESS", "INP_TYPE_RELEASE", "INP_UP", "INPUT_RECORD", "inputFocus", "inputFrame", "inputPlayback", "JOY_ASSIGNABLE", "JOY_DOWN_INDEX", "JOY_FACE1_INDEX", "JOY_FACE2_INDEX", "JOY_FACE3_INDEX", "JOY_FACE4_INDEX", "JOY_ICON_WIDTH", "JOY_LEFT_INDEX", "JOY_RIGHT_INDEX", "JOY_SELECT_INDEX", "JOY_SHOULDERL_INDEX", "JOY_SHOULDERLB_INDEX", "JOY_SHOULDERR_INDEX", "JOY_SHOULDERRB_INDEX", "JOY_START_INDEX", "JOY_TYPE_GENERIC", "JOY_TYPE_NAME", "JOY_TYPE_PLAYSTATION", "JOY_TYPE_SPRITE", "JOY_TYPE_XBOX", "JOY_UNKNOWN_INDEX", "JOY_UP_INDEX", "joyConnected", "joyMap", "joySlot", "joyType", "jpvoff", "KEY_ASSIGNABLE", "KEY_ICON_WIDTH", "keyMap", "LANG_BRAZILIAN", "LANG_BUILD", "LANG_COLUMN_NUM", "LANG_CONSTANT_NAME", "LANG_DISPLAY_NAME", "LANG_ENGLISH", "LANG_FRENCH", "LANG_GERMAN", "LANG_HEADERS", "LANG_ITALIAN", "LANG_JAPANESE", "LANG_MENU_ON", "LANG_SAVE_ID", "LANG_SPANISH", "language", "lastGamePlayed", "libraryBG", "lowestTurnCount", "MAX_PROFILE_NAME_LENGTH", "memoryMessage", "memoryMessagePage", "mGameAttractModeTimer", "mGameCleanupScript", "mGameCoop", "mGameDepthScript", "mGameGenre", "mGameID", "mGameIndex", "mGameInitScript", "mGameIntroStyle", "mGameLogoStyle", "mGameMenuStyle", "mGameMultiplayer", "mGamePillars", "mGameRealtime", "mGameRoom", "mGameSaveScript", "mGameTitle", "mGameTitleDropTime", "mGameTitleInputPauseTime", "mGameTitleMusic", "mGameTitleMusicLoop", "mGameTitleSlideStyle", "mGameTitleSlideTime", "mGameVersus", "mGameYear", "mmBoss", "mmFaceDirection", "mmHP", "mmHPgain", "mmHPmax", "mmHPtimer", "mmLevel", "mmNPC", "mmObj", "mmObjUnder", "mmPrevLevel", "mmStars", "mmStarsTimer", "mmStarsToGain", "mmStoreObj", "mmThrowPower", "mmUpgrades", "multStyle", "needToSaveAccount", "needToSaveConfig", "needToSaveProfile", "needToSaveProfileSettings", "newInputFrame", "NUM_BACKUPS", "NUM_BGS", "NUM_GAME_DETAILS", "NUM_GAMES", "NUM_GENRES", "NUM_INPUTS", "NUM_LANG", "NUM_LIBRARY_GAMES", "NUM_PILLARS", "NUM_PROFILES", "NUM_PROFILES_ACCESSIBLE", "numPlayers", "ON_STEAM_DECK", "palette", "parameters", "paused", "PILLAR_EPIC", "PILLAR_NAMES", "PILLAR_QUICK", "PILLAR_REFLEX", "PILLAR_THINKY", "PLAT_PS4", "PLAT_PS5", "PLAT_STEAM", "PLAT_SWITCH", "PLAT_XBOX", "platform", "playbackMode", "playbackOver", "playIntro", "prePauseFont", "PROFILE_PRELOAD", "profileLanguage", "QUICK_PLAY", "randSortLocked", "randSortOrder", "resetGame", "rng_state_1", "rng_state_2", "roomPrev", "SAVE_FILE", "scale", "scaleFill", "scaleMax", "scanlines", "SCREEN_HEIGHT", "SCREEN_WIDTH", "screenShotNum", "selGame", "selSort", "SFX", "SFX_ARRAY", "SFX_ARRAY_SIZE", "SFX_BASE_LEVEL", "SFX_BUFFERED", "SFX_LOOP", "SFX_MOTHER", "SFX_PRIORITY", "SKIP_GAME_INTRO", "SKIP_INTRO", "solutionState", "SORT_DISPLAY_NAME", "SORT_FAVORITE", "SORT_MULTIPLAYER", "SORT_NAME", "SORT_PET", "SORT_PILLAR_END", "SORT_PILLAR_START", "SORT_PLAYTIME", "SORT_PROGRESS", "SORT_RANDOM", "SORT_TOTAL", "SORT_YEAR", "sortDefault", "STANDARD_FPS", "steamOverlayActivated", "steamReady", "testLevel", "TEXT_GAME", "TEXT_LIBRARY", "TEXT_META", "TEXTUREGROUP", "timeStamp", "timeStampGame", "timeStampIncremental", "timeStampSpeedRun", "timeSumIncremental", "tooLongWord", "totalDeathCount", "totalFightCount", "totalTurnCount", "windowHasFocus"];
++    global.CT_ALL_GLOBAL_VARIABLES = ["ACCOUNT_FILE", "accountSaveData", "ach", "ACH_ALL", "ACH_CHERRY_1", "ACH_CHERRY_10", "ACH_CHERRY_15", "ACH_CHERRY_2", "ACH_CHERRY_20", "ACH_CHERRY_3", "ACH_CHERRY_30", "ACH_CHERRY_4", "ACH_CHERRY_40", "ACH_CHERRY_5", "ACH_CHERRY_50", "ACH_GOLD_1", "ACH_GOLD_10", "ACH_GOLD_15", "ACH_GOLD_2", "ACH_GOLD_20", "ACH_GOLD_3", "ACH_GOLD_30", "ACH_GOLD_4", "ACH_GOLD_40", "ACH_GOLD_5", "ACH_GOLD_50", "ACH_OPEN_1", "ACH_OPEN_25", "ACH_OPEN_50", "ACH_SCORE_ANY", "ACH_SCORE_FIRST", "ACH_SCORE_TOP_3", "ACH_TERMINAL", "ACH_TIER_BRONZE", "ACH_TIER_GOLD", "ACH_TIER_NONE", "ACH_TIER_PLATINUM", "ACH_TIER_SILVER", "ACH_TOTAL", "achDesc", "achName", "achTier", "all50", "altFire1", "altFire2", "AM_LIB_TIME", "AM_LIB_TIME_PER_GAME", "amFire1", "amFire1pressed", "amFire1released", "amFire2", "amFire2pressed", "amFire2released", "amHoldDown", "amHoldLeft", "amHoldRight", "amHoldUp", "amPressDown", "amPressLeft", "amPressRight", "amPressUp", "ARCADE_MODE_PROFILE", "arcadeCabinetConfig", "arcadeCabinetMode", "attractMode", "attractModeIndex", "attractModeLibrary", "attractModeLibraryTimer", "attractModePlaylist", "AUDIO_BGM_TOGGLE", "AUDIO_SFX_TOGGLE", "AUDIO_VOLUME", "AUDIO_VOLUME_DB_SCALING", "AUDIOGROUP_BGM", "AUDIOGROUP_SFX", "BACKUP_MINIMUM_TIME", "backupSaveNum", "backupTimer", "BG_BLOOD", "BG_BLUE_SKY", "BG_CERAMIC", "BG_CHERRY", "BG_DISPLAY_NAME", "BG_GOLD", "BG_GOLF", "BG_INDIGO", "BG_INFINITY", "BG_LEMON", "BG_MAIN_COLOR", "BG_MAIN_IMG", "BG_SHADOW_IMG", "BG_TAB_IMG", "BG_TANGERINE", "BGM", "BGM_BASE_LEVEL", "bufferSurface", "canDoShaders", "CARRIAGE_RETURN", "CARRIAGE_RETURN_SIMPLIFIED", "cheatedBypassTitle", "cheatedNoLoad", "cheatedNoSave", "cheatedNumPlayers", "cheatID", "CHERRY_WIN", "CHERRY_WIN_FAST", "cherryTimeAll", "cherryWins", "CONFIG_BACKUP", "CONFIG_FILE", "configSaveData", "crashToTerminal", "CRTScaleMax", "currCutscene", "currFile", "currFileName", "currFont", "currGame", "currGameID", "currGardenWin", "currProfileSaveData", "currProfileSaveNum", "currWin", "CUSTOM_ACHIEVEMENT_NOTIFICATIONS", "debugOn", "decoding", "deepestFloor", "DEFAULT_AUDIO_VOLUME", "DEFAULT_JOY", "DEFAULT_KEY", "DEFAULT_SCALE", "defaultLanguage", "dispBordered", "doubledUpButtons", "drawLibraryBG", "encoding", "EXCLUDE_ABSENT_GAMES", "EXTERNAL_TEXT_ERROR", "EXTERNAL_TEXT_FILE", "fontAlien", "fontAvianos", "fontBigWestern", "fontBlocky", "fontBlockyTall", "fontCrackBig", "fontCrackHeader", "fontCrackSmall", "fontDefault", "fontDefault_JP", "fontDefaultNoShadow", "fontDefaultNoShadow_JP", "fontDigital", "fontDigital2", "fontDigitalBig", "fontDigitalMini", "fontDotMatrix", "fontFancyShort", "fontGradient", "fontGrimstone", "fontHandwriting", "fontKanji12", "fontNoShadow", "fontTall", "fontTallBG", "fontTerminal", "fontThinOutline", "fontUFO", "fullscreen", "g03_bonus", "g03_gardenThresh", "g03_highestShipCount", "g03_justLaunched", "g03_lives", "g03_score", "g03_timeMin", "g03_timeSec", "g03_totalCrashes", "g03_totalFuelUse", "g06_freeLook", "g06_golfX", "g06_golfY", "g06_golfZ", "g06_th", "g06_tw", "g06_tx", "g06_ty", "g07_bestTime", "g07_totalCollectibleCount", "g07_totalDeathCount", "g07_totalKillCount", "g07_totalLeechCount", "g07_totalRoomCount", "g07_totalTime", "g11_bgmTrig", "g11_collectionEgg", "g11_input", "g11_launch", "g11_level", "g11_levelsVisited", "g11_metaTrigger", "g11_transition", "g15_QuickRestart", "g16_bossClear", "g16_camera_mode", "g16_camera_mode_stored", "g16_cs", "g16_gameStart", "g16_levelSelectState", "g16_lvClear", "g16_lvCurr", "g16_lvCurrTime", "g16_lvTime", "g16_tankCurr", "g16_tankPrev", "g16_xCam", "g16_xCamMax", "g16_xCamMin", "g16_xCP", "g16_xHub", "g16_yCam", "g16_yCamMax", "g16_yCamMin", "g16_yCP", "g16_yHub", "g17_pType", "g19_alive", "g19_cash", "g19_chestOpen", "g19_dataLoaded", "g19_doorOpen", "g19_dsItem", "g19_emblem", "g19_experience", "g19_invEquip", "g19_invStock", "g19_invUses", "g19_level", "g19_life", "g19_lizName", "g19_maxDepth", "g19_misty", "g19_pearlContent", "g19_pearlCount", "g19_relicStock", "g19_spawndir", "g19_spawnmode", "g19_spawnroom", "g19_xspawn", "g19_yspawn", "g22_enforceRules", "g22_scoreGoal", "g22_speed", "g22_speedR", "g22_timeActive", "g22_timeLimit", "g22_weaponTap", "g23_bestScore", "g23_currStage", "g23_golferUsage", "g23_holeInOnes", "g23_menu", "g23_mostHoleInOnes", "g23_playerGolfer", "g23_scoreArray", "g24_deaths", "g24_score", "g24_scoreDrop", "g24_time", "g24_warp", "g24_xSpawn", "g24_ySpawn", "g31_cheat", "g31_deathcount", "g31_fewestDeaths", "g31_furthestStage", "g31_intro", "g31_level", "g31_life", "g31_map", "g31_mostTicketsFound", "g31_power1", "g31_power2", "g31_power3", "g31_power4", "g31_power5", "g31_powerup", "g31_shotcount", "g31_ticket", "g31_ticketsFound", "g34_gardenGoal", "g34_killStreak", "g34_life", "g34_loop", "g34_sandwichesEaten", "g34_score", "g34_totalKills", "g35_tx", "g35_ty", "g38_coin", "g38_fuel", "g38_fuelMax", "g38_furthestLevel", "g38_hudItem", "g38_hudItemCount", "g38_item", "g38_itemBought", "g38_level", "g38_lights", "g38_lives", "g38_livesMax", "g38_magnets", "g38_mostScrolls", "g38_orbs", "g38_path", "g38_sagePath", "g38_shopRand", "g38_shortcut", "g44_intro", "g44_xMap", "g44_yMap", "g46_continues", "g46_extchain", "g46_extscore", "g46_justLaunched", "g46_letters", "g46_map", "g46_nohit", "g46_photochain", "g46_photoImage", "g46_photoSprite", "g46_practice", "g46_score", "g46_scoretop", "g46_secretPhotos", "g50_AllUnits", "g50_AllUnitsCount", "g50_UnitsTeam1", "g50_UnitsTeam1Count", "g50_UnitsTeam2", "g50_UnitsTeam2Count", "GARDEN_WIN", "GARDEN_WIN_FAST", "gardenWins", "GENERIC_WIN", "GENRE_NAMES", "GOLD_WIN", "GOLD_WIN_FAST", "goldTimeAll", "goldWins", "gv08_debugMax", "gv08_intro", "gv08_lives", "gv08_score", "gv08_stage", "gv08_stage_highest", "gv08_wave", "gv45_stage", "halfTime", "INP_DOWN", "INP_FIRE1", "INP_FIRE2", "INP_LEFT", "INP_RIGHT", "INP_START", "INP_TYPE_HOLD", "INP_TYPE_PRESS", "INP_TYPE_RELEASE", "INP_UP", "INPUT_RECORD", "inputFocus", "inputFrame", "inputPlayback", "invertedButtons", "JOY_ASSIGNABLE", "JOY_DOWN_INDEX", "JOY_FACE1_INDEX", "JOY_FACE2_INDEX", "JOY_FACE3_INDEX", "JOY_FACE4_INDEX", "JOY_ICON_WIDTH", "JOY_LEFT_INDEX", "JOY_RIGHT_INDEX", "JOY_SELECT_INDEX", "JOY_SHOULDERL_INDEX", "JOY_SHOULDERLB_INDEX", "JOY_SHOULDERR_INDEX", "JOY_SHOULDERRB_INDEX", "JOY_START_INDEX", "JOY_TYPE_GENERIC", "JOY_TYPE_NAME", "JOY_TYPE_PLAYSTATION", "JOY_TYPE_SPRITE", "JOY_TYPE_XBOX", "JOY_UNKNOWN_INDEX", "JOY_UP_INDEX", "joyConnected", "joyMap", "joySlot", "joyType", "jpvoff", "KEY_ASSIGNABLE", "KEY_ICON_WIDTH", "keyMap", "LANG_BRAZILIAN", "LANG_BUILD", "LANG_COLUMN_NUM", "LANG_CONSTANT_NAME", "LANG_DISPLAY_NAME", "LANG_ENGLISH", "LANG_FRENCH", "LANG_GERMAN", "LANG_HEADERS", "LANG_ITALIAN", "LANG_JAPANESE", "LANG_MENU_ON", "LANG_SAVE_ID", "LANG_SPANISH", "language", "lastGamePlayed", "libraryBG", "lowestTurnCount", "MAX_PROFILE_NAME_LENGTH", "memoryMessage", "memoryMessagePage", "mGameAttractModeTimer", "mGameCleanupScript", "mGameCoop", "mGameDepthScript", "mGameGenre", "mGameID", "mGameIndex", "mGameInitScript", "mGameIntroStyle", "mGameLogoStyle", "mGameMenuStyle", "mGameMultiplayer", "mGamePillars", "mGameRealtime", "mGameRoom", "mGameSaveScript", "mGameTitle", "mGameTitleDropTime", "mGameTitleInputPauseTime", "mGameTitleMusic", "mGameTitleMusicLoop", "mGameTitleSlideStyle", "mGameTitleSlideTime", "mGameVersus", "mGameYear", "mmBoss", "mmFaceDirection", "mmHP", "mmHPgain", "mmHPmax", "mmHPtimer", "mmLevel", "mmNPC", "mmObj", "mmObjUnder", "mmPrevLevel", "mmStars", "mmStarsTimer", "mmStarsToGain", "mmStoreObj", "mmThrowPower", "mmUpgrades", "multStyle", "needToSaveAccount", "needToSaveConfig", "needToSaveProfile", "needToSaveProfileSettings", "newInputFrame", "NUM_BACKUPS", "NUM_BGS", "NUM_GAME_DETAILS", "NUM_GAMES", "NUM_GENRES", "NUM_INPUTS", "NUM_LANG", "NUM_LIBRARY_GAMES", "NUM_PILLARS", "NUM_PROFILES", "NUM_PROFILES_ACCESSIBLE", "numPlayers", "ON_STEAM_DECK", "palette", "parameters", "paused", "PILLAR_EPIC", "PILLAR_NAMES", "PILLAR_QUICK", "PILLAR_REFLEX", "PILLAR_THINKY", "playbackMode", "playbackOver", "playIntro", "prePauseFont", "PROFILE_PRELOAD", "profileLanguage", "QUICK_PLAY", "randSortLocked", "randSortOrder", "resetGame", "rng_state_1", "rng_state_2", "roomPrev", "SAVE_FILE", "scale", "scaleFill", "scaleMax", "scanlines", "SCREEN_HEIGHT", "SCREEN_WIDTH", "screenShotNum", "selGame", "selSort", "SFX", "SFX_ARRAY", "SFX_ARRAY_SIZE", "SFX_BASE_LEVEL", "SFX_BUFFERED", "SFX_LOOP", "SFX_MOTHER", "SFX_PRIORITY", "SKIP_GAME_INTRO", "SKIP_INTRO", "solutionState", "SORT_DISPLAY_NAME", "SORT_FAVORITE", "SORT_MULTIPLAYER", "SORT_NAME", "SORT_PET", "SORT_PILLAR_END", "SORT_PILLAR_START", "SORT_PLAYTIME", "SORT_PROGRESS", "SORT_RANDOM", "SORT_TOTAL", "SORT_YEAR", "sortDefault", "speedRunPrevious", "STANDARD_FPS", "steamOverlayActivated", "steamReady", "testLevel", "TEXT_GAME", "TEXT_LIBRARY", "TEXT_META", "TEXTUREGROUP", "timeStamp", "timeStampGame", "timeStampIncremental", "timeStampSpeedRun", "timeSumIncremental", "tooLongWord", "totalDeathCount", "totalFightCount", "totalTurnCount", "windowHasFocus"];
 +    for (var i = 0; i < array_length(global.CT_ALL_GLOBAL_VARIABLES); i++)
 +    {
 +        variable_global_set(global.CT_ALL_GLOBAL_VARIABLES[i], undefined);
 +    }
-     global.PLAT_STEAM = 0;
-     global.PLAT_SWITCH = 1;
-     global.PLAT_PS4 = 2;
+     global.debugOn = false;
+     global.QUICK_PLAY = 0;
+     global.SKIP_INTRO = false;
 --- original/gml_GlobalScript_scrInitRandomness.gml
 +++ patched/gml_GlobalScript_scrInitRandomness.gml
 @@ -2,5 +2,10 @@
@@ -166,22 +168,22 @@
      global.paused = true;
      global.prePauseFont = global.currFont;
 -    game_set_speed(60, gamespeed_fps);
-     scrSaveTimePlayed();
      if (audio_exists(global.SFX))
      {
+         if (audio_is_playing(global.SFX))
 --- original/gml_GlobalScript_scrPlayGame.gml
 +++ patched/gml_GlobalScript_scrPlayGame.gml
-@@ -23,7 +23,10 @@
-     scrTexturegroupChange(global.TEXTUREGROUP[0], global.TEXTUREGROUP[global.currGameID]);
+@@ -15,7 +15,10 @@
+     unload_datagroup(0, true, false);
      scrOpenCurrFile();
      var playCount = scrReadRealManual(0, "gameRunCount" + string(global.currGameID), 0);
 +    if (!global.CT_BlockSaves)
 +    {
      scrWriteRealManual(0, "gameRunCount" + string(global.currGameID), playCount + 1);
 +    }
+     global.speedRunPrevious = scrReadRealManual(0, "speedRunTime" + string(global.currGameID), 0);
      global.currWin = scrReadRealManual(0, "gameWin" + string(global.currGameID), 0);
      global.currGardenWin = scrReadRealManual(0, "gardenWin" + string(global.currGameID), 0);
-     scrCloseCurrFile();
 --- original/gml_GlobalScript_scrRandomize.gml
 +++ patched/gml_GlobalScript_scrRandomize.gml
 @@ -6,7 +6,22 @@
@@ -232,7 +234,7 @@
 +        return false;
 +    }
      scrOpenCurrFile();
-     var milsNew = current_time - global.timeStamp;
+     var milsNew = scrCurrentTime() - global.timeStamp;
      var milsPrev = scrReadRealManual(0, "timeSum", 0);
 --- original/gml_GlobalScript_scrScaleDisplay.gml
 +++ patched/gml_GlobalScript_scrScaleDisplay.gml
@@ -276,15 +278,18 @@
          {
 --- original/gml_Object_oLibrary_Draw_0.gml
 +++ patched/gml_Object_oLibrary_Draw_0.gml
-@@ -88,7 +88,7 @@
-         scrDrawTextInput(8, 184, _str[0], 0, 0, false);
-         scrDrawTextInput(8, 192, _str[1], 0, 0, false);
-         scrSetFont(global.fontThinOutline);
--        draw_text(8, 200, "v1.7.8.21");
-+        draw_text(8, 200, global.betaVersion);
-         scrFontDefault();
-     }
+@@ -81,8 +81,10 @@
+     draw_rectangle_color(8, 24, 199, 151, c_black, c_black, c_black, c_black, 0);
      if (substate == SUB_CRACK_WAIT)
+     {
+-        scrSetFont(global.fontHandwriting);
+         draw_set_color(global.palette[17]);
++        scrSetFont(global.fontThinOutline);
++        draw_text(8, 200, global.betaVersion);
++        scrSetFont(global.fontHandwriting);
+         var _str = scrStringVal("crack_launch_text", "[2");
+         _str = string_line_breaks(_str, 16, 2);
+         scrDrawTextInput(8, 184, _str[0], 0, 0, false);
 --- original/gml_Object_oLibrary_Other_11.gml
 +++ patched/gml_Object_oLibrary_Other_11.gml
 @@ -23,6 +23,7 @@
@@ -292,7 +297,7 @@
  else if (substate == SUB_EXIT)
  {
 +    global.CT_DisplayInputs = true;
-     scrTexturegroupChange(-1, global.TEXTUREGROUP[52]);
+     unload_datagroup(52, true, false);
      scrSwitchState(STATE_INTRO);
  }
 --- original/gml_Object_oLibrary_Other_12.gml
@@ -308,7 +313,7 @@
          {
 --- original/gml_Object_oScreenHandler_Create_0.gml
 +++ patched/gml_Object_oScreenHandler_Create_0.gml
-@@ -10,3 +10,44 @@
+@@ -10,3 +10,54 @@
  pal_bright = 1;
  pal_bright_target = 1;
  do_screen = false;
@@ -325,10 +330,21 @@
 +global.CT_TARGET_FPS = 60;
 +global.FRAME_COUNT = 0;
 +global.CT_ShowFrameCounter = false;
-+global.CT_ShowRNG = true;
++global.CT_ShowRNG = false;
 +global.CT_INPUTS = array_create(0);
 +global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS);
 +global.CT_RANDOMIZE_TABLE = array_create(0);
++var gameVersion = extension_get_option_value("CoffeeTools", "gameVersion");
++var extensionVersion = extension_get_version("CoffeeTools");
++if (string_ends_with(extensionVersion, ".0"))
++{
++    extensionVersion = string_copy(extensionVersion, 1, string_length(extensionVersion) - 2);
++}
++if (string_ends_with(gameVersion, ".0"))
++{
++    gameVersion = string_copy(gameVersion, 1, string_length(gameVersion) - 2);
++}
++global.betaVersion = "v" + gameVersion + " - CoffeeTools v" + extensionVersion;
 +if (file_exists("coffeetools/play.ctas"))
 +{
 +    readTasFile("coffeetools/play.ctas");
@@ -352,7 +368,6 @@
 +debugDSOffsetY = 0;
 +debugDSOffsetWidth = 0;
 +debugDSStackQueueRead = "";
-+global.betaVersion = "v" + extension_get_option_value("CoffeeTools", "gameVersion") + " - CoffeeTools v" + extension_get_version("CoffeeTools");
 --- original/gml_Object_oScreenHandler_Draw_75.gml
 +++ patched/gml_Object_oScreenHandler_Draw_75.gml
 @@ -1,3 +1,7 @@

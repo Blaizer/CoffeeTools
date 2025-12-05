@@ -96,9 +96,14 @@ void EndImportCode() {
     DisableAllSyncBindings();
 }
 
-async Task ImportCodeFiles(string[] scriptFiles, bool updateStatus = false) {
+async Task ImportCodeFiles(string[] scriptFiles, string[] globalFiles, bool updateStatus = false) {
     if(updateStatus) {
         SetProgressBar(null, "Importing code", 0, scriptFiles.Length);
+    }
+
+    string globals = "";
+    foreach (string globalFile in globalFiles) {
+        globals += "\n" + File.ReadAllText(globalFile);
     }
 
     BeginImportCode();
@@ -109,7 +114,7 @@ async Task ImportCodeFiles(string[] scriptFiles, bool updateStatus = false) {
                 throw new ScriptException($"Not a GML file: ${scriptFile}");
             }
 
-            importGroup.QueueReplace(Path.GetFileNameWithoutExtension(scriptFile), File.ReadAllText(scriptFile));
+            importGroup.QueueReplace(Path.GetFileNameWithoutExtension(scriptFile), File.ReadAllText(scriptFile) + globals);
 
             if(updateStatus) {
                 IncrementProgressParallel();
@@ -130,8 +135,9 @@ async Task ImportCodeFiles(string[] scriptFiles, bool updateStatus = false) {
     EndImportCode();
 }
 
-async Task ImportCodeDir(string dir, bool updateStatus = false) {
+async Task ImportCodeDir(string dir, bool updateStatus = false, string globalDir = null) {
     string[] scriptFiles = Directory.GetFiles(dir, "*.gml");
+    string[] globalFiles = globalDir != null ? Directory.GetFiles(globalDir, "*.gml") : Array.Empty<string>();
 
-    await ImportCodeFiles(scriptFiles, updateStatus);
+    await ImportCodeFiles(scriptFiles, globalFiles, updateStatus);
 }

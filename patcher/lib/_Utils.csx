@@ -176,7 +176,7 @@ Dictionary<string, string> GetVersionDefines()
 string GetModVersion()
 {
     var defines = GetVersionDefines();
-    return $"{defines["MOD_VERSION_MAJOR"]}.{defines["MOD_VERSION_MINOR"]}.{defines["MOD_VERSION_BUILD"]}";
+    return $"{defines["MOD_VERSION_MAJOR"]}.{defines["MOD_VERSION_MINOR"]}.{defines["MOD_VERSION_BUILD"]}.{defines["MOD_VERSION_REVSN"]}";
 }
 
 string GetGameVersion()
