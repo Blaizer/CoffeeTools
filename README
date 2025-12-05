@@ -13,6 +13,7 @@
 [F6] : Show/hide frame counter
 [F7] : Reset frame counter
 [F8] : Show/hide TAS frame counter
+[F9] : Show/hide RNG display
 [Number keys] : Load savestates 1-10 (Hold [Shift] to save)
 [-][+] : Decrease/increase game speed
 [Spacebar] : Enter Frame Advance Mode / Advance frame
@@ -39,6 +40,9 @@ Created by ToastGhost and Blazier.
 
 Full source code:
 https://github.com/Blaizer/CoffeeTools/
+
+Issues tracker:
+https://docs.google.com/document/d/11ZORNFap2cN6vJHyfhNTjFemSwuwXE8H0ss4mwOu_ts/edit?usp=sharing
 
 GMLoader-UFO50 download:
 https://github.com/phil-macrocheira/GMLoader-UFO50/releases/
