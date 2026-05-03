@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 string ExportAsm(UndertaleData utdata, UndertaleCode code) {
     return code.Disassemble(utdata.Variables, utdata.CodeLocals?.For(code));
@@ -106,6 +107,8 @@ async Task ImportCodeFiles(string[] scriptFiles, string[] globalFiles, bool upda
         globals += "\n" + File.ReadAllText(globalFile);
     }
 
+    globals = SubstituteScopedMacros(globals);
+
     BeginImportCode();
     var importGroup = new UndertaleModLib.Compiler.CodeImportGroup(Data);
     // await Task.Run(() => {
@@ -114,7 +117,7 @@ async Task ImportCodeFiles(string[] scriptFiles, string[] globalFiles, bool upda
                 throw new ScriptException($"Not a GML file: ${scriptFile}");
             }
 
-            importGroup.QueueReplace(Path.GetFileNameWithoutExtension(scriptFile), File.ReadAllText(scriptFile) + globals);
+            importGroup.QueueReplace(Path.GetFileNameWithoutExtension(scriptFile), SubstituteScopedMacros(File.ReadAllText(scriptFile)) + globals);
 
             if(updateStatus) {
                 IncrementProgressParallel();
@@ -136,8 +139,93 @@ async Task ImportCodeFiles(string[] scriptFiles, string[] globalFiles, bool upda
 }
 
 async Task ImportCodeDir(string dir, bool updateStatus = false, string globalDir = null) {
-    string[] scriptFiles = Directory.GetFiles(dir, "*.gml");
-    string[] globalFiles = globalDir != null ? Directory.GetFiles(globalDir, "*.gml") : Array.Empty<string>();
+    string[] scriptFiles = Directory.GetFiles(dir, "*.gml").OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToArray();
+    string[] globalFiles = globalDir != null ? Directory.GetFiles(globalDir, "*.gml").OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToArray() : Array.Empty<string>();
 
     await ImportCodeFiles(scriptFiles, globalFiles, updateStatus);
+}
+
+struct MacroDefinition
+{
+    public string Name;
+    public string Body;
+    public int BodyIndex;
+}
+
+string SubstituteScopedMacros(string source)
+{
+    var macros = new List<MacroDefinition>();
+    var replacements = new Dictionary<string, string>();
+
+    int i = 0;
+    int length = source.Length;
+
+    while (i < length)
+    {
+        int start = i;
+        while (i < length && source[i++] != '\n') ;
+        int end = i;
+
+        string line = source.Substring(start, end - start);
+
+        int p = 0;
+        while (p < line.Length && char.IsWhiteSpace(line[p])) p++;
+
+        if (!line.Substring(p).StartsWith("#macro")) continue;
+        p += 6;
+
+        int spaceStart = p;
+        while (p < line.Length && char.IsWhiteSpace(line[p])) p++;
+        if (p == spaceStart) continue;
+
+        int idStart = p;
+        while (p < line.Length && !char.IsWhiteSpace(line[p])) p++;
+        if (p == idStart) continue;
+
+        string fullId = line.Substring(idStart, p - idStart);
+
+        while (p < line.Length && char.IsWhiteSpace(line[p])) p++;
+
+        int bodyIndex = start + p;
+        string body = line.Substring(p).TrimEnd('\r', '\n');
+
+        var parts = fullId.Split(':', 2);
+        if (parts.Length == 2)
+        {
+            string scope = parts[0];
+            string name = parts[1];
+
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(scope)))
+            {
+                replacements.Add(name, body);
+            }
+        }
+        else
+        {
+            macros.Add(new MacroDefinition
+            {
+                Name = fullId,
+                Body = body,
+                BodyIndex = bodyIndex
+            });
+        }
+    }
+
+    var sb = new StringBuilder(source);
+
+    for (int m = macros.Count - 1; m >= 0; m--)
+    {
+        var macro = macros[m];
+
+        if (!replacements.TryGetValue(macro.Name, out string replacement))
+            continue;
+
+        int start = macro.BodyIndex;
+        int len = macro.Body.Length;
+
+        sb.Remove(start, len);
+        sb.Insert(start, replacement);
+    }
+
+    return sb.ToString();
 }

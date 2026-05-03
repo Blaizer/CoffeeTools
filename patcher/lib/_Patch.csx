@@ -214,15 +214,24 @@ async Task<string> GenerateCodePatch(UndertaleData patched, UndertaleData origin
         }
         await ExportSpecificCodeToDir(original, scriptNames, Path.Join(tempDir.Path, "original"), updateStatus ? "Exporting original code": null);
         await ExportSpecificCodeToDir(patched, scriptNames, Path.Join(tempDir.Path, "patched"), updateStatus ? "Exporting patched code": null);
-        return RemoveNewFileDiffs(await BusyBox("diff", tempDir.Path, "-a -b -B -d -N -w -r original patched".Split(' '), updateStatus, 1));
+        return RemoveNewFileDiffs(await BusyBox("diff", tempDir.Path, "-a -b -B -d -N -w -r -U 2 original patched".Split(' '), updateStatus, 1));
     }
 }
 
 struct GamePatch {
+    public struct ReplacementPair {
+        public string Pattern { get; set; }
+        public string Replacement { get; set; }
+    }
+
     public string Name { get; set; }
     public string ScriptFile { get; set; }
     public bool Public { get; set; }
     public string[] Deps { get; set; }
+    public string Author { get; set; }
+    public string Description { get; set; }
+    public ReplacementPair[] ReadmeReplacements { get; set; }
+    public string[] ConflictingMods { get; set; }
 }
 
 JsonSerializerOptions __g_gamepatch_jsonDeserializeOptions = new(JsonSerializerDefaults.Web);
@@ -252,6 +261,14 @@ IEnumerable<GamePatch> ScanGamePatches(string gamePatchesDir) {
 
         if(gamePatch.Deps == null) {
             gamePatch.Deps = new string[]{};
+        }
+
+        if(gamePatch.ReadmeReplacements == null) {
+            gamePatch.ReadmeReplacements = new GamePatch.ReplacementPair[]{};
+        }
+
+        if(gamePatch.ConflictingMods == null) {
+            gamePatch.ConflictingMods = new string[]{};
         }
 
         yield return gamePatch;
