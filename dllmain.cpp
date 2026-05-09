@@ -16,14 +16,14 @@ namespace
     constexpr char c_ExtensionName[] = "CoffeeTools";
     constexpr char c_ExtensionVersion[] = MOD_VERSION;
 
-    constexpr size_t c_exe_run_loop = 0x14017c390;
-    constexpr size_t c_exe_wndproc = 0x1400b7ab0;
-    constexpr size_t c_exe_poll_messages = 0x1403a0520;
-    constexpr size_t c_exe_refresh_screen = 0x140009c60;
-    constexpr size_t c_exe_check_audio_groups_loaded = 0x140494120;
-    constexpr size_t c_exe_update_texture_status = 0x1400e2b80;
-    constexpr size_t c_exe_perform_game_load = 0x140177e20;
-    constexpr size_t c_exe_yygml_exception_handler = 0x14028c480;
+    constexpr size_t c_exe_run_loop = 0x140187310;
+    constexpr size_t c_exe_wndproc = 0x1400bbce0;
+    constexpr size_t c_exe_poll_messages = 0x14038dc00;
+    constexpr size_t c_exe_refresh_screen = 0x14000ac90;
+    constexpr size_t c_exe_check_audio_groups_loaded = 0x140482be0;
+    constexpr size_t c_exe_update_texture_status = 0x1400e66d0;
+    constexpr size_t c_exe_perform_game_load = 0x140182c70;
+    constexpr size_t c_exe_yygml_exception_handler = 0x14027d130;
 
     YYRunnerInterface g_runnerInterface;
     CInstance* g_selfinst;

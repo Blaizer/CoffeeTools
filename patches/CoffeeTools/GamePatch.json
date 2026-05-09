@@ -1,1 +1,14 @@
-{ "Public": true }
+{
+  "Author": "ToastGhost & Blazier",
+  "Description": "Input Display, Savestates, Frame Advance, TAS Playback, and other utilities for UFO 50!",
+  "ReadmeReplacements": [
+    {
+      "Pattern": "(?<=COFFEETOOLS v)\\d+(?:\\.\\d+){2,3}",
+      "Replacement": "$ModVersion"
+    },
+    {
+      "Pattern": "(?<=UFO 50 v)\\d+(?:\\.\\d+){2,3}",
+      "Replacement": "$GameVersion"
+    }
+  ]
+}

@@ -1,3 +1,3 @@
 #load "_Patch.csx"
 
-ImportCode();
+await ImportCode();

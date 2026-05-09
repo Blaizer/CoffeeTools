@@ -80,6 +80,7 @@ void PatchExtension()
         DefineExtensionFunction("ct_keyboard_check");
         DefineExtensionFunction("ct_keyboard_check_pressed");
         DefineExtensionFunction("ct_keyboard_check_released");
+        Data.Functions.EnsureDefined("buffer_get_used_size", Data.Strings);
 
         file.InitScript = Data.Strings.MakeString("");
         file.CleanupScript = Data.Strings.MakeString("");

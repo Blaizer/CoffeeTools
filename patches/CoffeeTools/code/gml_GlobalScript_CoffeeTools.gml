@@ -22,6 +22,12 @@ function displayReset()
     }
 }
 
+function ct_game_set_speed(arg0)
+{
+    global.currentMillisecondsPerFrame = 1000 / (arg0 * 60);
+    game_set_speed(arg0 * global.STANDARD_FPS, gamespeed_fps);
+}
+
 function modifyFps(arg0, arg1)
 {
     if (arg0)
@@ -45,7 +51,7 @@ function modifyFps(arg0, arg1)
     }
     
     displayReset();
-    game_set_speed(global.STANDARD_FPS, gamespeed_fps);
+    ct_game_set_speed(1);
 }
 
 // Called exactly once per frame from CoffeeTools.dll at the very start of the frame, to increment any reliable counters.
@@ -55,7 +61,7 @@ function incrementFrame()
         global.FRAME_COUNT++;
 
     global.INPUT_FRAME++;
-    global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS);
+    global.CT_INPUTS_LENGTH = buffer_get_used_size(global.CT_INPUTS_BUF) div 8;
     global.rng_display_count_prev = global.rng_display_count;
 }
 
@@ -195,13 +201,13 @@ function readGlobalVariable(buffer)
     variable_global_set(varName, varValue);
 }
 
-function savestateSlot(arg0, arg1)
+function savestateSlot(writeSavestate, slotNumber)
 {
     if (!global.paused && global.currFile >= 1 && global.currFile <= global.NUM_PROFILES_ACCESSIBLE)
     {
-        var name = "coffeetools/savestate" + string(global.currFile) + "-" + string(arg1);
+        var name = "coffeetools/savestate" + string(global.currFile) + "-" + string(slotNumber);
         
-        if (arg0)
+        if (writeSavestate)
         {
             surface_save(frameAdvanceSurface, name + ".png");
 
@@ -346,7 +352,7 @@ function savestateSlot(arg0, arg1)
             buffer_save(appendFileBuffer, name + "a.dat");
             buffer_delete(appendFileBuffer);
             
-            global.CT_MsgText = "SLOT " + string(arg1) + " SAVED";
+            global.CT_MsgText = "SLOT " + string(slotNumber) + " SAVED";
             global.CT_MessageTimer = current_time + 1000;
         }
         else if (file_exists(name + ".dat"))
@@ -363,15 +369,15 @@ function savestateSlot(arg0, arg1)
 
                 if (magic != APPEND_FILE.MAGIC || version != APPEND_FILE.VERSION)
                 {
-                    global.CT_MsgText = "SLOT " + string(arg1) + " BLOCKED (INVALID savestate"+string(global.currFile) + "-" + string(arg1)+"a.dat)";
+                    global.CT_MsgText = "SLOT " + string(slotNumber) + " BLOCKED (INVALID savestate"+string(global.currFile) + "-" + string(slotNumber)+"a.dat)";
                     global.CT_MessageTimer = current_time + 1500;
                 }
                 else if(loadingSavestateGameNumber != global.currGame)
                 {
                     if(loadingSavestateGameNumber == 0)
-                        global.CT_MsgText = "SLOT " + string(arg1) + " BLOCKED (LIBRARY)";
+                        global.CT_MsgText = "SLOT " + string(slotNumber) + " BLOCKED (LIBRARY)";
                     else
-                        global.CT_MsgText = "SLOT " + string(arg1) + " BLOCKED ("+string(global.mGameTitle[loadingSavestateGameNumber])+")";
+                        global.CT_MsgText = "SLOT " + string(slotNumber) + " BLOCKED ("+string(global.mGameTitle[loadingSavestateGameNumber])+")";
                     global.CT_MessageTimer = current_time + 1500;
                 }
                 else
@@ -404,8 +410,10 @@ function savestateSlot(arg0, arg1)
                     buffer_write(tempMemoryBuffer, buffer_u32, oAudioHandler.bgmLibraryGarden);
                     buffer_write(tempMemoryBuffer, buffer_u32, oAudioHandler.bgmLibraryInfinity);
                     
+                    var rerecordCount = global.CT_RERECORD_COUNT;
+
                     ct_game_load(name + ".dat");
-                    
+
                     count = buffer_read(appendFileBuffer, buffer_u32);
                     if (LOG.LEVEL >= LOG.VERBOSE) trace("READ GLOBALS");
                     for (var i = 0; i < count; i++)
@@ -894,20 +902,22 @@ function savestateSlot(arg0, arg1)
                     oAudioHandler.bgmLibraryGarden = buffer_read(tempMemoryBuffer, buffer_u32);
                     oAudioHandler.bgmLibraryInfinity = buffer_read(tempMemoryBuffer, buffer_u32);
                     //Quick fix in case user is loading a savestate during a freeze frame
-                    game_set_speed(global.STANDARD_FPS, gamespeed_fps);
+                    ct_game_set_speed(1);
                     //On the frame a savestate was just loaded, we will fix any inputs that are incongruent with the previous frame.
                     global.CT_FixIncongruentInputsFrame = true;
                     buffer_delete(tempMemoryBuffer);
                     
                     readTasFile(name + ".ctas");
                     
-                    global.CT_MsgText = "SLOT " + string(arg1) + " LOADED";
+                    global.CT_MsgText = "SLOT " + string(slotNumber) + " LOADED";
                     global.CT_MessageTimer = current_time + 1000;
+
+                    global.CT_RERECORD_COUNT = rerecordCount + 1;
                 }
             }
             else
             {
-                global.CT_MsgText = "SLOT " + string(arg1) + " BLOCKED (MISSING savestate"+string(global.currFile) + "-" + string(arg1)+"a.dat)";
+                global.CT_MsgText = "SLOT " + string(slotNumber) + " BLOCKED (MISSING savestate"+string(global.currFile) + "-" + string(arg1)+"a.dat)";
                 global.CT_MessageTimer = current_time + 1500;
             }
             buffer_delete(appendFileBuffer);
@@ -1500,13 +1510,13 @@ function drawToolsText()
     
     if (global.CT_ShowTasFrameCounter)
     {
-        if ((global.INPUT_FRAME + 1) < global.CT_INPUTS_LENGTH)
+        if (global.INPUT_FRAME + 1 < global.CT_INPUTS_LENGTH)
             draw_set_color(global.palette[11]);
         else
             draw_set_color(global.palette[13]);
         
         draw_set_halign(fa_right);
-        draw_text(384, 209 - rightSideOffset, string(global.INPUT_FRAME + 1) + "/" + string(array_length(global.CT_INPUTS)));
+        draw_text(384, 209 - rightSideOffset, string(global.INPUT_FRAME + 1) + "/" + string(buffer_get_used_size(global.CT_INPUTS_BUF) div 8));
         rightSideOffset += 8;
         draw_set_halign(fa_left);
     }
@@ -1572,17 +1582,11 @@ function drawToolsText()
     surface_reset_target();
 }
 
-function applyTasInputs(arg0, arg1)
+function applyTasInputs(player, inputFrame)
 {
-    var player = arg0;
-    var inputFrame = arg1;
-    
     if (inputFrame < global.CT_INPUTS_LENGTH)
     {
-        var c = global.CT_INPUTS[inputFrame];
-        
-        if (player == 1)
-            c = c >> int64(32);
+        var c = buffer_peek(global.CT_INPUTS_BUF, inputFrame * 8 + player * 4, buffer_u32);
 
         holdUp        = (c & (int64(1) << int64(0))) != 0;
         pressUp       = (c & (int64(1) << int64(1))) != 0;
@@ -1628,24 +1632,28 @@ function applyTasInputs(arg0, arg1)
         if (fire2released) c |= int64(1) << int64(17);
         if (pressStart)    c |= int64(1) << int64(18);
         
-        while (array_length(global.CT_INPUTS) < (inputFrame + 1))
+        var length = buffer_get_used_size(global.CT_INPUTS_BUF) div 8;
+        buffer_seek(global.CT_INPUTS_BUF, buffer_seek_start, length * 8);
+        while (length < inputFrame + 1)
         {
             var prevInput = int64(0);
-            if (array_length(global.CT_INPUTS) > 0)
-                prevInput = global.CT_INPUTS[array_length(global.CT_INPUTS) - 1];
+            if (length > 0)
+            {
+                prevInput = buffer_peek(global.CT_INPUTS_BUF, (length - 1) * 8, buffer_u64);
+            }
 
-            array_push(global.CT_INPUTS, prevInput & int64(0x9249));
+            buffer_write(global.CT_INPUTS_BUF, buffer_u64, prevInput & int64(0x924900009249));
+            length++;
         }
-        
-        if (player == 1)
-            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & 4294967295) | (c << int64(32));
-        else
-            global.CT_INPUTS[inputFrame] = (global.CT_INPUTS[inputFrame] & -4294967296) | c;
+
+        buffer_poke(global.CT_INPUTS_BUF, inputFrame * 8 + player * 4, buffer_u32, c);
     }
 }
 
 function readTasFile(arg0)
 {
+    var rerecordCount = 0;
+
     if (file_exists(arg0))
     {
         var b = buffer_load(arg0);
@@ -1656,12 +1664,19 @@ function readTasFile(arg0)
             var version = buffer_read(b, buffer_u32);
             var inputsLength = buffer_read(b, buffer_s32);
             var randomizeLength = buffer_read(b, buffer_s32);
+            rerecordCount = buffer_read(b, buffer_u32);
+            var currentTime = buffer_read(b, buffer_u32);
             buffer_seek(b, buffer_seek_start, 1024);
-            global.CT_INPUTS = array_create(inputsLength);
+
             global.CT_RANDOMIZE_TABLE = array_create(randomizeLength);
             
+            var size = max(inputsLength * 8, 0x1000000);
+            buffer_delete(global.CT_INPUTS_BUF);
+            global.CT_INPUTS_BUF = buffer_create(size, buffer_grow, 1);
             for (var i = 0; i < inputsLength; i++)
-                global.CT_INPUTS[i] = buffer_read(b, buffer_u64);
+            {
+                buffer_write(global.CT_INPUTS_BUF, buffer_u64, buffer_read(b, buffer_u64));
+            }
             
             for (var i = 0; i < randomizeLength; i++)
             {
@@ -1677,17 +1692,11 @@ function readTasFile(arg0)
                 var incongruentInputsCount = 0;
                 for (var player = 0; player < 2; player++)
                 {
-                    var cprev = global.CT_INPUTS[0];
-                    
-                    if (player == 1)
-                        c = c >> int64(32);
+                    var cprev = buffer_peek(global.CT_INPUTS_BUF, buffer_u32, 0 * 8 + player * 4);
                     
                     for (var inputFrame = 1; inputFrame < inputsLength; inputFrame++)
                     {
-                        var c = global.CT_INPUTS[inputFrame];
-                        
-                        if (player == 1)
-                            c = c >> int64(32);
+                        var c = buffer_peek(global.CT_INPUTS_BUF, buffer_u32, inputFrame * 8 + player * 4);
                         
                         for (var input = 0; input < 6; input ++) //UP, DOWN, LEFT, RIGHT, FIRE1, FIRE2
                         {
@@ -1699,17 +1708,14 @@ function readTasFile(arg0)
                             if(heldprev and !held and !released) && (input > 3) //Possible for UP, DOWN, LEFT, RIGHT by using a gamepad's stick
                             {
                                 incongruentInputsCount ++
-                                //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
                             }
                             //else if (pressed && !released && heldprev) && (false) //Possible for UP, DOWN, LEFT, RIGHT, FIRE1, FIRE2 by using both keyboard and gamepad (Disabled)
                             //{
                             //    incongruentInputsCount ++
-                            //    //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
                             //}
                             else if (!pressed && !held && released && !heldprev) && (input > 3) //Possible for UP, DOWN, LEFT, RIGHT by holding opposite direction
                             {
                                 incongruentInputsCount ++
-                                //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+2)) //Flip released flag
                             }
                             if (!pressed && held && !heldprev) //Possible for UP, DOWN, LEFT, RIGHT by letting go of the opposite direction.
                             {
@@ -1726,7 +1732,6 @@ function readTasFile(arg0)
                                 if((input < 4) && (heldopp)) || (input > 3) //If the opposite direction is currently held, then something's wrong.
                                 {
                                     incongruentInputsCount ++
-                                    //global.CT_INPUTS[inputFrame] = global.CT_INPUTS[inputFrame] ^ (1 << ((input*3)+1)) //Flip pressed flag
                                 }
                             }
                         }
@@ -1744,22 +1749,30 @@ function readTasFile(arg0)
         buffer_delete(b);
     }
     
-    global.CT_INPUTS_LENGTH = array_length(global.CT_INPUTS) - 1;
+    global.CT_INPUTS_LENGTH = (buffer_get_used_size(global.CT_INPUTS_BUF) div 8) - 1;
+    return rerecordCount;
 }
 
 function writeTasFile(arg0)
 {
-    var inputsLength = min(global.INPUT_FRAME + 1, array_length(global.CT_INPUTS));
+    var inputsLength = min(global.INPUT_FRAME + 1, buffer_get_used_size(global.CT_INPUTS_BUF) div 8);
     var b = buffer_create(1024, buffer_grow, 1);
     buffer_fill(b, 0, buffer_u8, 0, 1024);
     buffer_write(b, buffer_u32, TAS_FILE.MAGIC);
     buffer_write(b, buffer_u32, TAS_FILE.VERSION);
     buffer_write(b, buffer_s32, inputsLength);
     var randomizeLengthOffset = buffer_tell(b);
+    buffer_write(b, buffer_s32, 0);
+    buffer_write(b, buffer_u32, global.CT_RERECORD_COUNT);
+    buffer_write(b, buffer_u32, global.currentTime);
+
     buffer_seek(b, buffer_seek_start, 1024);
     
+    buffer_seek(global.CT_INPUTS_BUF, buffer_seek_start, 0);
     for (var i = 0; i < inputsLength; i++)
-        buffer_write(b, buffer_u64, global.CT_INPUTS[i]);
+    {
+        buffer_write(b, buffer_u64, buffer_read(global.CT_INPUTS_BUF, buffer_u64));
+    }
     
     var randomizeLength = array_length(global.CT_RANDOMIZE_TABLE);
     
@@ -1905,7 +1918,7 @@ enum APPEND_FILE
 enum TAS_FILE
 {
     MAGIC = 0x53415443,
-    VERSION = 3,
+    VERSION = 4,
 
     HEADER_LENGTH = 1024
 }

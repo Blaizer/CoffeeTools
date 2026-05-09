@@ -1,9 +1,8 @@
 [CoffeeTools Instructions]
 --------------------------
-1. Download and extract GMLoader-UFO50 version 1.1.0 or later (link at bottom of ReadMe)
-2. Copy the [CoffeeTools] folder from this zip to the [my mods] folder in GMLoader-UFO50
-3. Run [UFO 50 Mod Installer], then click [Install Mods] with CoffeeTools checked
-4. Launch UFO 50
+1. Download and extract UFO 50 Mod Loader version 2.0.4 or later (link at bottom of ReadMe)
+2. Copy the [CoffeeTools] zip to the [my mods] folder in your UFO 50 Mod Loader folder
+3. Run [UFO 50 Mod Loader], then click [Load Mods and Launch Game] with CoffeeTools checked
 
  CONTROLS
 [F2] : Show/hide player 2 inputs
@@ -35,7 +34,7 @@
 - When all of your inputs have been played back, save the savestate and it'll now be ready to use again.
 
 
-[COFFEETOOLS v1.4.0] - for UFO 50 v1.8.9
+[COFFEETOOLS v1.5.0] - for UFO 50 v1.9.1
 Created by ToastGhost and Blazier.
 
 Full source code:
@@ -44,8 +43,8 @@ https://github.com/Blaizer/CoffeeTools/
 Issues tracker:
 https://docs.google.com/document/d/11ZORNFap2cN6vJHyfhNTjFemSwuwXE8H0ss4mwOu_ts/edit?usp=sharing
 
-GMLoader-UFO50 download:
-https://github.com/phil-macrocheira/GMLoader-UFO50/releases/
+UFO 50 Mod Loader download:
+https://gamebanana.com/tools/20160
 
 Thanks to p-sam for UFO 50 Patcher:
 https://github.com/p-sam/ufo50-patcher
