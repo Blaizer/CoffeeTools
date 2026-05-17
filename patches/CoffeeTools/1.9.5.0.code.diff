@@ -292,7 +292,7 @@
          if (INTRO_SCENE < 24)
 --- original/gml_Object_oScreenHandler_Create_0.gml
 +++ patched/gml_Object_oScreenHandler_Create_0.gml
-@@ -31,2 +31,57 @@
+@@ -31,2 +31,67 @@
  pal_bright = 1;
  do_screen = false;
 +global.CT_DisplayInputs = false;
@@ -327,14 +327,24 @@
 +    gameVersion = string_copy(gameVersion, 1, string_length(gameVersion) - 2);
 +}
 +global.betaVersion = "v" + gameVersion + " - CoffeeTools v" + extensionVersion;
++playCTASPath = "";
++global.CT_ShowTasFrameCounter = false;
 +if (file_exists("coffeetools/play.ctas"))
 +{
-+    global.CT_RERECORD_COUNT = readTasFile("coffeetools/play.ctas");
-+    global.CT_ShowTasFrameCounter = true;
++    playCTASPath = "coffeetools/play.ctas";
 +}
-+else
++for (var i = 0; i < array_length(global.parameters); i++)
 +{
-+    global.CT_ShowTasFrameCounter = false;
++    if (string_copy(global.parameters[i], string_length(global.parameters[i]) - 4, 5) == ".ctas" && file_exists(global.parameters[i]))
++    {
++        playCTASPath = global.parameters[i];
++        break;
++    }
++}
++if (playCTASPath != "")
++{
++    global.CT_RERECORD_COUNT = readTasFile(playCTASPath);
++    global.CT_ShowTasFrameCounter = true;
 +}
 +global.INPUT_FRAME = 0;
 +global.RANDOMIZE_INDEX = 0;

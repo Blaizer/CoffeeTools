@@ -85,6 +85,8 @@ void PatchExtension()
         file.InitScript = Data.Strings.MakeString("");
         file.CleanupScript = Data.Strings.MakeString("");
     }
+
+    Data.Options.Info |= UndertaleOptions.OptionsFlags.DisableSandbox;
 }
 
 async Task ImportCode()
