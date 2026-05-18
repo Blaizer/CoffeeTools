@@ -465,10 +465,10 @@
          screenY = (window_get_height() * 0.5) - (screenHeight * 0.5);
 +            if (ct_in_runloop())
 +            {
-+                screenWidth = (screenWidth / display_get_width()) * 384 * _scale_2;
-+                screenHeight = (screenHeight / display_get_width()) * 384 * _scale_2;
-+                screenX = (screenX / display_get_width()) * 384 * _scale_2;
-+                screenY = (screenY / display_get_width()) * 384 * _scale_2;
++                screenWidth = (screenWidth / display_get_width()) * 384 * min(_scale_2, 8);
++                screenHeight = (screenHeight / display_get_width()) * 384 * min(_scale_2, 8);
++                screenX = (screenX / display_get_width()) * 384 * min(_scale_2, 8);
++                screenY = (screenY / display_get_width()) * 384 * min(_scale_2, 8);
      }
 +        }
      else
