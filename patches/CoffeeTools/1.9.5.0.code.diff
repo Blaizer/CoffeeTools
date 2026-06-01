@@ -157,10 +157,11 @@
  }
 --- original/gml_GlobalScript_scrPause.gml
 +++ patched/gml_GlobalScript_scrPause.gml
-@@ -7,5 +7,4 @@
+@@ -7,5 +7,5 @@
      global.paused = true;
      global.prePauseFont = global.currFont;
 -    game_set_speed(60, gamespeed_fps);
++    ct_game_set_speed(1);
      if (audio_exists(global.SFX))
      {
 --- original/gml_GlobalScript_scrPlayGame.gml

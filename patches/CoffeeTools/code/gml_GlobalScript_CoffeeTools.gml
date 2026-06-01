@@ -25,7 +25,7 @@ function displayReset()
 function ct_game_set_speed(arg0)
 {
     global.currentMillisecondsPerFrame = 1000 / (arg0 * 60);
-    game_set_speed(arg0 * global.STANDARD_FPS, gamespeed_fps);
+    game_set_speed(max(arg0 * global.STANDARD_FPS, 1), gamespeed_fps);
 }
 
 function modifyFps(arg0, arg1)
