@@ -18,6 +18,93 @@
 +    global.rng_display_count_prev = 0;
      repeat (20)
      {
+--- original/gml_GlobalScript_scr07_DrawMapUI.gml
++++ patched/gml_GlobalScript_scr07_DrawMapUI.gml
+@@ -54,6 +54,6 @@
+         _height = o07__Game.screenHeight;
+     }
+-    var _scol = (floor(current_time div 120) % 3) == 0;
+-    var _dfls = (floor(current_time div 120) % 4) < 2;
++    var _scol = (floor(scrCurrentTime() div 120) % 3) == 0;
++    var _dfls = (floor(scrCurrentTime() div 120) % 4) < 2;
+     if (room == rm07_GravGuns4)
+     {
+--- original/gml_GlobalScript_scr07_DrawModUI.gml
++++ patched/gml_GlobalScript_scr07_DrawModUI.gml
+@@ -57,5 +57,5 @@
+                 draw_set_color(global.palette[9]);
+                 draw_rectangle(arg0 + 97, arg1 + 29 + (64 * i), arg0 + 96 + 127, arg1 + 28 + (64 * i) + 47, 0);
+-                if ((floor(current_time * 0.01) % 2) == 0)
++                if ((floor(scrCurrentTime() * 0.01) % 2) == 0)
+                 {
+                     scrSetFont(global.fontTerminal);
+--- original/gml_GlobalScript_scr28_Checkpoints.gml
++++ patched/gml_GlobalScript_scr28_Checkpoints.gml
+@@ -19,7 +19,7 @@
+                     {
+                         totalP1Laps++;
+-                        var lapTime = current_time - lapP1TimeStamp;
++                        var lapTime = scrCurrentTime() - lapP1TimeStamp;
+                         totalP1Time += lapTime;
+-                        lapP1TimeStamp = current_time;
++                        lapP1TimeStamp = scrCurrentTime();
+                     }
+                 }
+@@ -29,7 +29,7 @@
+                     {
+                         totalP2Laps++;
+-                        var lapTime = current_time - lapP2TimeStamp;
++                        var lapTime = scrCurrentTime() - lapP2TimeStamp;
+                         totalP2Time += lapTime;
+-                        lapP2TimeStamp = current_time;
++                        lapP2TimeStamp = scrCurrentTime();
+                     }
+                 }
+@@ -118,7 +118,7 @@
+                     {
+                         totalP1Races++;
+-                        var raceTime = current_time - raceP1TimeStamp;
++                        var raceTime = scrCurrentTime() - raceP1TimeStamp;
+                         totalP1RaceTime += raceTime;
+-                        raceP1TimeStamp = current_time;
++                        raceP1TimeStamp = scrCurrentTime();
+                     }
+                 }
+@@ -128,7 +128,7 @@
+                     {
+                         totalP2Races++;
+-                        var raceTime = current_time - raceP2TimeStamp;
++                        var raceTime = scrCurrentTime() - raceP2TimeStamp;
+                         totalP2RaceTime += raceTime;
+-                        raceP2TimeStamp = current_time;
++                        raceP2TimeStamp = scrCurrentTime();
+                     }
+                 }
+--- original/gml_GlobalScript_scr35_DrawInventoryUI.gml
++++ patched/gml_GlobalScript_scr35_DrawInventoryUI.gml
+@@ -114,5 +114,5 @@
+         {
+             _dropname = scrString("inventory_give");
+-            if ((floor(current_time / 500) % 2) == 0)
++            if ((floor(scrCurrentTime() / 500) % 2) == 0)
+             {
+                 draw_set_color(global.palette[7]);
+@@ -122,5 +122,5 @@
+         {
+             _dropname = scrString("inventory_sell");
+-            if ((floor(current_time / 500) % 2) == 0)
++            if ((floor(scrCurrentTime() / 500) % 2) == 0)
+             {
+                 draw_set_color(global.palette[3]);
+--- original/gml_GlobalScript_scr35_DrawStatusUI.gml
++++ patched/gml_GlobalScript_scr35_DrawStatusUI.gml
+@@ -5,5 +5,5 @@
+     {
+         var _traits = scr35_EquipmentTraits(ds_map_find_value(myInventory, "ACCESSORY"));
+-        draw_set_color(global.palette[2 + ((current_time div 160) % 2)]);
++        draw_set_color(global.palette[2 + ((scrCurrentTime() div 160) % 2)]);
+         var _l = string_line_breaks(_traits[0], 7, 2);
+         if (_l[1] != "")
 --- original/gml_GlobalScript_scrCurrentTime.gml
 +++ patched/gml_GlobalScript_scrCurrentTime.gml
 @@ -1,7 +1,4 @@
@@ -233,6 +320,501 @@
 +    }
      scrOpenCurrFile();
      if (arg0 == global.CHERRY_WIN)
+--- original/gml_Object_o06_SwitchBarrier_Step_0.gml
++++ patched/gml_Object_o06_SwitchBarrier_Step_0.gml
+@@ -31,5 +31,5 @@
+ if (onTier == 3)
+ {
+-    image_index = 3 + (round(current_time / 100) % 2);
++    image_index = 3 + (round(scrCurrentTime() / 100) % 2);
+ }
+ else
+--- original/gml_Object_o06__Game_Draw_0.gml
++++ patched/gml_Object_o06__Game_Draw_0.gml
+@@ -198,9 +198,9 @@
+ if (clubflash == 1)
+ {
+-    draw_sprite(s06_UIClub, (current_time / 1000) % 2, viewx + 16, viewy);
++    draw_sprite(s06_UIClub, (scrCurrentTime() / 1000) % 2, viewx + 16, viewy);
+ }
+ else if (clubflash == 2)
+ {
+-    draw_sprite(s06_UIClub, 3 + ((current_time / 1000) % 2), viewx + 16, viewy);
++    draw_sprite(s06_UIClub, 3 + ((scrCurrentTime() / 1000) % 2), viewx + 16, viewy);
+ }
+ else
+@@ -239,5 +239,5 @@
+     else if (o06_zPlayer.brakeCount == o06_zPlayer.brakeCountMax)
+     {
+-        draw_sprite(s06_pBrake, (current_time / 100) % 2, viewx + 24, viewy + 88 + 32 + pY);
++        draw_sprite(s06_pBrake, (scrCurrentTime() / 100) % 2, viewx + 24, viewy + 88 + 32 + pY);
+     }
+     else
+--- original/gml_Object_o06_eMosquito_Draw_0.gml
++++ patched/gml_Object_o06_eMosquito_Draw_0.gml
+@@ -7,5 +7,5 @@
+ if (latchOn == -4)
+ {
+-    _yoff = lengthdir_x(2, current_time / 10);
++    _yoff = lengthdir_x(2, scrCurrentTime() / 10);
+     draw_sprite(s06_Shadow, 0, x, y);
+ }
+--- original/gml_Object_o06_pPowerUp_Draw_0.gml
++++ patched/gml_Object_o06_pPowerUp_Draw_0.gml
+@@ -1,2 +1,2 @@
+ draw_sprite(s06_Shadow, 0, x, y);
+-draw_sprite(sprite_index, 0, x, (y - 4) + lengthdir_x(2, current_time / 8));
++draw_sprite(sprite_index, 0, x, (y - 4) + lengthdir_x(2, scrCurrentTime() / 8));
+--- original/gml_Object_o07_AcidSurfDown_Step_0.gml
++++ patched/gml_Object_o07_AcidSurfDown_Step_0.gml
+@@ -1 +1 @@
+-image_index = round(current_time / 100);
++image_index = round(scrCurrentTime() / 100);
+--- original/gml_Object_o07_AcidSurfUp_Step_0.gml
++++ patched/gml_Object_o07_AcidSurfUp_Step_0.gml
+@@ -1 +1 @@
+-image_index = round(current_time / 100);
++image_index = round(scrCurrentTime() / 100);
+--- original/gml_Object_o07_Player_Draw_0.gml
++++ patched/gml_Object_o07_Player_Draw_0.gml
+@@ -84,5 +84,5 @@
+     if (o07__Game.modSlot[2] == 2)
+     {
+-        if ((floor(current_time * 0.2) % 2) == 1)
++        if ((floor(scrCurrentTime() * 0.2) % 2) == 1)
+         {
+             scrSpriteColored(s07_pTorsoH, imgTorso, _drawX, _drawY, xscale, yscale, global.palette[3]);
+@@ -109,9 +109,9 @@
+                 if (floor(leechNum) == _f || ceil(leechNum) == _f || floor(leechNum) == (_f + 1) || ceil(leechNum) == (_f + 1))
+                 {
+-                    draw_sprite(s07_LeechSparkSiphon, (floor(_dir / 45) * 4) + floor(((current_time * 0.02) + _f) % 4), _x, _y);
++                    draw_sprite(s07_LeechSparkSiphon, (floor(_dir / 45) * 4) + floor(((scrCurrentTime() * 0.02) + _f) % 4), _x, _y);
+                 }
+                 else if ((_f % 2) == 1)
+                 {
+-                    draw_sprite(s07_LeechSpark, (floor(_dir / 45) * 4) + floor(((current_time * 0.02) + _f) % 4), _x, _y);
++                    draw_sprite(s07_LeechSpark, (floor(_dir / 45) * 4) + floor(((scrCurrentTime() * 0.02) + _f) % 4), _x, _y);
+                 }
+                 if (point_distance(_x, _y, leechPosX, leechPosY) <= (_dist * 2))
+--- original/gml_Object_o07_eBossX_Phase3_Head_Step_0.gml
++++ patched/gml_Object_o07_eBossX_Phase3_Head_Step_0.gml
+@@ -51,5 +51,5 @@
+     }
+     num = _k;
+-    x = lerp(other.x, myBody.x + (32 * myBody.image_xscale), 1 - (_k / _neckLength)) + lengthdir_x(4, (current_time * 0.5) - (_k * 45));
++    x = lerp(other.x, myBody.x + (32 * myBody.image_xscale), 1 - (_k / _neckLength)) + lengthdir_x(4, (scrCurrentTime() * 0.5) - (_k * 45));
+     y = lerp(other.y - 8, myBody.y + (24 * myBody.image_yscale), 1 - (_k / _neckLength));
+     with (o07_eBossX_Phase3_Ball)
+--- original/gml_Object_o07_eBossX_TentacleArm_Draw_0.gml
++++ patched/gml_Object_o07_eBossX_TentacleArm_Draw_0.gml
+@@ -6,12 +6,12 @@
+ if (electric && scrIRandom(3) >= 1)
+ {
+-    draw_sprite(s07_eElecWeak, current_time div 20, x - 16, y - 12);
++    draw_sprite(s07_eElecWeak, scrCurrentTime() div 20, x - 16, y - 12);
+ }
+ if (electric && scrIRandom(3) >= 1)
+ {
+-    draw_sprite(s07_eElecWeak, current_time div 20, x - 16, y - 4);
++    draw_sprite(s07_eElecWeak, scrCurrentTime() div 20, x - 16, y - 4);
+ }
+ if (electric && scrIRandom(3) >= 1)
+ {
+-    draw_sprite(s07_eElec, (current_time div 100) + ((x / 16) % 4), x - 16, y - 8);
++    draw_sprite(s07_eElec, (scrCurrentTime() div 100) + ((x / 16) % 4), x - 16, y - 8);
+ }
+--- original/gml_Object_o07_eHeatRoom_Draw_0.gml
++++ patched/gml_Object_o07_eHeatRoom_Draw_0.gml
+@@ -16,5 +16,5 @@
+     if (o07__Game.heatAlpha > 0)
+     {
+-        draw_set_color(merge_color(c_red, c_yellow, 0.6 + (round(lengthdir_x(1, current_time / 5)) / 6)));
++        draw_set_color(merge_color(c_red, c_yellow, 0.6 + (round(lengthdir_x(1, scrCurrentTime() / 5)) / 6)));
+         draw_set_alpha((0.19 * round(o07__Game.heatAlpha * 2)) / 2);
+         gpu_set_blendmode(bm_add);
+--- original/gml_Object_o07_zDoor_Draw_0.gml
++++ patched/gml_Object_o07_zDoor_Draw_0.gml
+@@ -17,5 +17,5 @@
+ if (place_meeting(x, y, o07_eHeatRoom))
+ {
+-    draw_sprite_ext(sprite_index, doorFrame, x, y, 1, 1, 0, merge_color(c_red, c_yellow, 0.3 + (round(lengthdir_x(1, current_time / 5)) / 6)), 1);
++    draw_sprite_ext(sprite_index, doorFrame, x, y, 1, 1, 0, merge_color(c_red, c_yellow, 0.3 + (round(lengthdir_x(1, scrCurrentTime() / 5)) / 6)), 1);
+     gpu_set_blendmode(bm_add);
+ }
+--- original/gml_Object_o10_Player_Draw_0.gml
++++ patched/gml_Object_o10_Player_Draw_0.gml
+@@ -37,5 +37,5 @@
+             var _xx = lerp(_item.x, x, clamp((dropCount - 25) / 5, 0, 1)) - 8;
+             var _yy = lerp(_item.y, y, clamp((dropCount - 25) / 5, 0, 1)) - 8;
+-            if (i == 0 && ((current_time div 120) % 2) == 0)
++            if (i == 0 && ((scrCurrentTime() div 120) % 2) == 0)
+             {
+                 scrSpriteColored(s10_Items, _item.item_type, _xx, _yy, 1, 1, 16777215);
+@@ -111,5 +111,5 @@
+ if (missileDelay < missileDelayMax)
+ {
+-    if (missileDelay == 0 && ((current_time div 10) % 2) == 0)
++    if (missileDelay == 0 && ((scrCurrentTime() div 10) % 2) == 0)
+     {
+         sprite_index = s10_PlayerFlash;
+--- original/gml_Object_o10_eBossShark_Step_0.gml
++++ patched/gml_Object_o10_eBossShark_Step_0.gml
+@@ -216,5 +216,5 @@
+         var target = o10_Player;
+         xVel = approach(xVel, sign(target.x - x) * (abs(target.x - x) > 96 || place_meeting(x, y + sign(target.y - y), obj_floor) * -(abs(target.x - x) < 64)), 0.1);
+-        yVel = approach(yVel, (sign(target.y - y) * (abs(target.y - y) > 16)) + lengthdir_x(0.5, current_time * 0.2), 0.1);
++        yVel = approach(yVel, (sign(target.y - y) * (abs(target.y - y) > 16)) + lengthdir_x(0.5, scrCurrentTime() * 0.2), 0.1);
+         if (moveCount-- <= 0)
+         {
+--- original/gml_Object_o10_eHermitCrab_Step_0.gml
++++ patched/gml_Object_o10_eHermitCrab_Step_0.gml
+@@ -83,5 +83,5 @@
+     if (moveCount < 20)
+     {
+-        x = xstart + lengthdir_x(1, (current_time div 10) * 45);
++        x = xstart + lengthdir_x(1, (scrCurrentTime() div 10) * 45);
+     }
+     else
+--- original/gml_Object_o10_eNautilus_Step_0.gml
++++ patched/gml_Object_o10_eNautilus_Step_0.gml
+@@ -113,5 +113,5 @@
+     }
+     image_angle = 0;
+-    hspeed = approach(hspeed, lengthdir_x(1, current_time * 0.1), 0.5);
++    hspeed = approach(hspeed, lengthdir_x(1, scrCurrentTime() * 0.1), 0.5);
+     if (vspeed == 0)
+     {
+@@ -120,5 +120,5 @@
+     else
+     {
+-        vspeed = approach(vspeed, sign(vspeed) + (sign(vspeed) * lengthdir_x(0.75, current_time * 0.2)), 0.1);
++        vspeed = approach(vspeed, sign(vspeed) + (sign(vspeed) * lengthdir_x(0.75, scrCurrentTime() * 0.2)), 0.1);
+     }
+     if (abs(o10_Player.y - y) > 64)
+--- original/gml_Object_o10_eOcto_Draw_0.gml
++++ patched/gml_Object_o10_eOcto_Draw_0.gml
+@@ -17,6 +17,6 @@
+ if (sprite_index == s10_Octo || image_index < 3)
+ {
+-    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, x + 12, y + ((16 * image_yscale) + (8 * sign((((200 + current_time) div 400) % 2) - 0.5) * image_yscale)), 1, -sign((((200 + current_time) div 400) % 2) - 0.5) * image_yscale, global.palette[16], 1);
+-    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, x - 12, y + ((16 * image_yscale) + (8 * -sign((((200 + current_time) div 400) % 2) - 0.5) * image_yscale)), -1, sign((((200 + current_time) div 400) % 2) - 0.5) * image_yscale, global.palette[16], 1);
++    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, x + 12, y + ((16 * image_yscale) + (8 * sign((((200 + scrCurrentTime()) div 400) % 2) - 0.5) * image_yscale)), 1, -sign((((200 + scrCurrentTime()) div 400) % 2) - 0.5) * image_yscale, global.palette[16], 1);
++    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, x - 12, y + ((16 * image_yscale) + (8 * -sign((((200 + scrCurrentTime()) div 400) % 2) - 0.5) * image_yscale)), -1, sign((((200 + scrCurrentTime()) div 400) % 2) - 0.5) * image_yscale, global.palette[16], 1);
+ }
+ if (blink > 0)
+@@ -36,6 +36,6 @@
+ if (sprite_index == s10_Octo || image_index < 3)
+ {
+-    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, round(x) + 10, y + ((16 * image_yscale) + (6 * -sign(((current_time div 400) % 2) - 0.5) * image_yscale)), 1, sign(((current_time div 400) % 2) - 0.5) * image_yscale, c_white, 1);
+-    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, round(x) - 10, y + ((16 * image_yscale) + (6 * sign(((current_time div 400) % 2) - 0.5) * image_yscale)), -1, -sign(((current_time div 400) % 2) - 0.5) * image_yscale, c_white, 1);
++    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, round(x) + 10, y + ((16 * image_yscale) + (6 * -sign(((scrCurrentTime() div 400) % 2) - 0.5) * image_yscale)), 1, sign(((scrCurrentTime() div 400) % 2) - 0.5) * image_yscale, c_white, 1);
++    draw_sprite_part_ext(s10_OctoTentacle, 0, 16, 0, 48, 16, round(x) - 10, y + ((16 * image_yscale) + (6 * sign(((scrCurrentTime() div 400) % 2) - 0.5) * image_yscale)), -1, -sign(((scrCurrentTime() div 400) % 2) - 0.5) * image_yscale, c_white, 1);
+ }
+ if (shotCount < 20 && state == 1)
+--- original/gml_Object_o22_Ball_Draw_0.gml
++++ patched/gml_Object_o22_Ball_Draw_0.gml
+@@ -8,5 +8,5 @@
+     if (abs(spin) > 0)
+     {
+-        draw_sprite_ext(sprite_index, round(image_index), x + lengthdir_x(4, current_time * 0.5), y - z, 1, 1, 0, c_white, 1);
++        draw_sprite_ext(sprite_index, round(image_index), x + lengthdir_x(4, scrCurrentTime() * 0.5), y - z, 1, 1, 0, c_white, 1);
+     }
+     else
+--- original/gml_Object_o22_Game_Draw_0.gml
++++ patched/gml_Object_o22_Game_Draw_0.gml
+@@ -258,5 +258,5 @@
+         else if (_charge > 1 && (_charge / _chargemax) >= i)
+         {
+-            draw_set_color(global.palette[(((current_time div 80) % 2) == 0) ? 2 : 10]);
++            draw_set_color(global.palette[(((scrCurrentTime() div 80) % 2) == 0) ? 2 : 10]);
+             draw_rectangle(camera_get_view_x(view_get_camera(0)) + 19 + (32 * (i - 1)), camera_get_view_y(view_get_camera(0)) + 11, camera_get_view_x(view_get_camera(0)) + 19 + (32 * (i - 1)) + 25, camera_get_view_y(view_get_camera(0)) + 20, 0);
+         }
+@@ -296,5 +296,5 @@
+         else if (_charge > 1 && (_charge / _chargemax) >= i)
+         {
+-            draw_set_color(global.palette[(((current_time div 80) % 2) == 0) ? 2 : 10]);
++            draw_set_color(global.palette[(((scrCurrentTime() div 80) % 2) == 0) ? 2 : 10]);
+             draw_rectangle((camera_get_view_x(view_get_camera(0)) + 384) - 20 - (32 * (i - 1)), camera_get_view_y(view_get_camera(0)) + 11, (camera_get_view_x(view_get_camera(0)) + 384) - 19 - (32 * (i - 1)) - 26, camera_get_view_y(view_get_camera(0)) + 20, 0);
+         }
+--- original/gml_Object_o23_Mas_Draw_0.gml
++++ patched/gml_Object_o23_Mas_Draw_0.gml
+@@ -289,5 +289,5 @@
+     var _y = _yview + 48;
+     var _img = 0;
+-    var _i = current_time div 120;
++    var _i = scrCurrentTime() div 120;
+     if (endingType == 1 && (_i % 18) <= 6)
+     {
+@@ -324,8 +324,8 @@
+     draw_rectangle_color(_x, _y, _x + 96, _y + 48, c_black, c_black, c_black, c_black, 0);
+     var _sprite = spriteGolfer[_victor];
+-    _img = floor(1.5 + lengthdir_x(1.5, current_time / 3));
+-    _x = _xview + 112 + lerp(1, -1, (((current_time / 3) + 180) % 720) < 360);
+-    _y = (_yview + 112) - abs(lengthdir_x(8 * (_victor == 6), current_time / 6));
+-    var _xface = lerp(-1, 1, (((current_time / 3) + 180) % 720) < 360);
++    _img = floor(1.5 + lengthdir_x(1.5, scrCurrentTime() / 3));
++    _x = _xview + 112 + lerp(1, -1, (((scrCurrentTime() / 3) + 180) % 720) < 360);
++    _y = (_yview + 112) - abs(lengthdir_x(8 * (_victor == 6), scrCurrentTime() / 6));
++    var _xface = lerp(-1, 1, (((scrCurrentTime() / 3) + 180) % 720) < 360);
+     draw_sprite_ext(_sprite, _img, _x, _y, _xface, 1, 0, c_white, 1);
+     var _c = 16777215;
+--- original/gml_Object_o28_Mas_Step_0.gml
++++ patched/gml_Object_o28_Mas_Step_0.gml
+@@ -299,6 +299,6 @@
+                 racer[rCount].human = true;
+                 racer[rCount].num = 0;
+-                lapP1TimeStamp = current_time;
+-                raceP1TimeStamp = current_time;
++                lapP1TimeStamp = scrCurrentTime();
++                raceP1TimeStamp = scrCurrentTime();
+             }
+             else if (multip && uId == playerSel[1])
+@@ -306,6 +306,6 @@
+                 racer[rCount].human = true;
+                 racer[rCount].num = 1;
+-                lapP2TimeStamp = current_time;
+-                raceP2TimeStamp = current_time;
++                lapP2TimeStamp = scrCurrentTime();
++                raceP2TimeStamp = scrCurrentTime();
+             }
+             else
+--- original/gml_Object_o32_Mas_Draw_0.gml
++++ patched/gml_Object_o32_Mas_Draw_0.gml
+@@ -74,5 +74,5 @@
+ {
+     draw_rectangle_color(_xv + 96, (_yv + 216) - 24, _xv + 384, (_yv + 216) - 8, c_black, c_black, c_black, c_black, 0);
+-    var _xText = (_xv + 384) - ((((current_time * 0.1) % 672) div 8) * 8);
++    var _xText = (_xv + 384) - ((((scrCurrentTime() * 0.1) % 672) div 8) * 8);
+     var _yText = (_yv + 216) - 24;
+     scrSetFont(global.fontTall);
+@@ -227,5 +227,5 @@
+     var _xRadarPoint = round(_xRadarCenter + lengthdir_x(_RadarDistance, _CheckpointDirection));
+     var _yRadarPoint = round(_yRadarCenter + lengthdir_y(_RadarDistance, _CheckpointDirection));
+-    draw_sprite(s32_RadarPoint, (current_time div 100) % 2, _xRadarPoint, _yRadarPoint);
++    draw_sprite(s32_RadarPoint, (scrCurrentTime() div 100) % 2, _xRadarPoint, _yRadarPoint);
+     var _drawPointer = false;
+     if (tPointer > 0 && (tPointer > 30 || global.halfTime) && onionsDelivered[dayNumber] != 5)
+@@ -253,5 +253,5 @@
+         _xRadarPoint = round(_xRadarCenter + lengthdir_x(_RadarDistance, _CheckpointDirection));
+         _yRadarPoint = round(_yRadarCenter + lengthdir_y(_RadarDistance, _CheckpointDirection));
+-        draw_sprite(s32_RadarPointHome, (current_time div 100) % 2, _xRadarPoint, _yRadarPoint);
++        draw_sprite(s32_RadarPointHome, (scrCurrentTime() div 100) % 2, _xRadarPoint, _yRadarPoint);
+     }
+     if (returnToBase)
+--- original/gml_Object_o32_eGangsterCar_Draw_0.gml
++++ patched/gml_Object_o32_eGangsterCar_Draw_0.gml
+@@ -16,5 +16,5 @@
+     else
+     {
+-        _aimdir = round(current_time / 10 / 22.5) * 22.5;
++        _aimdir = round(scrCurrentTime() / 10 / 22.5) * 22.5;
+         target = -4;
+     }
+--- original/gml_Object_o32_eGangsterCar_Step_0.gml
++++ patched/gml_Object_o32_eGangsterCar_Step_0.gml
+@@ -244,5 +244,5 @@
+     else
+     {
+-        _aimdir = round(current_time / 10 / 22.5) * 22.5;
++        _aimdir = round(scrCurrentTime() / 10 / 22.5) * 22.5;
+     }
+     if (shotCountBurst++ > 60)
+--- original/gml_Object_o32_eUFOInvaderSmall_Step_0.gml
++++ patched/gml_Object_o32_eUFOInvaderSmall_Step_0.gml
+@@ -21,5 +21,5 @@
+     stateTime--;
+     zHeight = approach(zHeight, 48 + lengthdir_x(4, (stateTime / 100) * 1080), 1);
+-    direction += lengthdir_x(2, current_time div 100);
++    direction += lengthdir_x(2, scrCurrentTime() div 100);
+     if (stateTime <= 0)
+     {
+--- original/gml_Object_o35_Game_Step_0.gml
++++ patched/gml_Object_o35_Game_Step_0.gml
+@@ -86,5 +86,5 @@
+ if (isFlying > 0 && gameState != UnknownEnum.Value_1 && gameState != UnknownEnum.Value_6 && !instance_exists(o35__Enemy) && descending == 0)
+ {
+-    o35_Background.y = lerp(o35_Background.y, 4 + min(isFlying, 4) + lengthdir_x(2, current_time / 10), 0.1);
++    o35_Background.y = lerp(o35_Background.y, 4 + min(isFlying, 4) + lengthdir_x(2, scrCurrentTime() / 10), 0.1);
+ }
+ else if (gameState != UnknownEnum.Value_m99)
+--- original/gml_Object_o35_Player_Draw_0.gml
++++ patched/gml_Object_o35_Player_Draw_0.gml
+@@ -83,10 +83,10 @@
+ {
+     _outline = true;
+-    _outlinecol = global.palette[lerp(3, 24, (current_time div 3) % 2)];
++    _outlinecol = global.palette[lerp(3, 24, (scrCurrentTime() div 3) % 2)];
+ }
+ if (o35_Game.isPoisoned > 0 && mainBody)
+ {
+     _outline = true;
+-    _outlinecol = global.palette[lerp(12, 24, (current_time div 3) % 2)];
++    _outlinecol = global.palette[lerp(12, 24, (scrCurrentTime() div 3) % 2)];
+ }
+ if (o35_Game.isHasted > 0 && mainBody)
+--- original/gml_Object_o35__Enemy_Draw_0.gml
++++ patched/gml_Object_o35__Enemy_Draw_0.gml
+@@ -29,5 +29,5 @@
+ {
+     _outline = true;
+-    _outlinecol = global.palette[28 + ((current_time div 200) % 2)];
++    _outlinecol = global.palette[28 + ((scrCurrentTime() div 200) % 2)];
+     _colorshift = global.palette[4];
+ }
+@@ -40,5 +40,5 @@
+     _cycle[3] = 18;
+     _outline = true;
+-    _outlinecol = merge_color(c_black, global.palette[_cycle[(current_time div 200) % 4]], 0.75);
++    _outlinecol = merge_color(c_black, global.palette[_cycle[(scrCurrentTime() div 200) % 4]], 0.75);
+     _colorshift = global.palette[2];
+ }
+@@ -75,5 +75,5 @@
+     }
+ }
+-if (isFlashing > 0 && (floor(current_time / 50) % 2) == 0)
++if (isFlashing > 0 && (floor(scrCurrentTime() / 50) % 2) == 0)
+ {
+     gpu_set_fog(true, flashingColor, 0, 1);
+@@ -82,10 +82,10 @@
+ {
+     _colorshift = 16777215;
+-    _outlinecol = lerp(128, 0, (current_time div 100) % 2);
++    _outlinecol = lerp(128, 0, (scrCurrentTime() div 100) % 2);
+ }
+ if (scr35_CurrAttackHasTrait("unstoppable") && animState <= 1)
+ {
+     _colorshift = global.palette[3];
+-    _outlinecol = lerp(16711680, 0, ((current_time div 100) + 1) % 2);
++    _outlinecol = lerp(16711680, 0, ((scrCurrentTime() div 100) + 1) % 2);
+ }
+ if (_colorshift != -1 && global.canDoShaders)
+--- original/gml_Object_o35_eAbyssLordHand_Step_0.gml
++++ patched/gml_Object_o35_eAbyssLordHand_Step_0.gml
+@@ -54,5 +54,5 @@
+     {
+         x = clamp(lerp(x, clamp(_lord.x, 144, 240) + lengthdir_x(64, orbitTimeActual), 0.1), 96, 288);
+-        y = lerp(y, ((_lord.y + lengthdir_y(32 + (32 * (_lord.fightMode == 4)), orbitTimeActual)) - 16) + lengthdir_y(8, current_time * 0.6), 0.1);
++        y = lerp(y, ((_lord.y + lengthdir_y(32 + (32 * (_lord.fightMode == 4)), orbitTimeActual)) - 16) + lengthdir_y(8, scrCurrentTime() * 0.6), 0.1);
+         z = 152 - y;
+         moveCount++;
+--- original/gml_Object_o35_iPuzzleWall_Draw_0.gml
++++ patched/gml_Object_o35_iPuzzleWall_Draw_0.gml
+@@ -46,5 +46,5 @@
+                     else
+                     {
+-                        if (((current_time div 60) % 100) == (xx + yy))
++                        if (((scrCurrentTime() div 60) % 100) == (xx + yy))
+                         {
+                             gpu_set_fog(true, global.palette[0], 0, 1);
+--- original/gml_Object_o35_pWhirlwind_Step_0.gml
++++ patched/gml_Object_o35_pWhirlwind_Step_0.gml
+@@ -3,5 +3,5 @@
+ x = xstart + lengthdir_y(64 - (aliveTime * 0.4), aliveTime * 5);
+ image_index = ceil(lerp(58, 54, clamp(aliveTime / 45, 0, 1)));
+-image_xscale = lerp(-1, 1, (current_time div 250) % 2);
++image_xscale = lerp(-1, 1, (scrCurrentTime() div 250) % 2);
+ with (o35__Enemy)
+ {
+--- original/gml_Object_o45_MapNode_Draw_0.gml
++++ patched/gml_Object_o45_MapNode_Draw_0.gml
+@@ -15,5 +15,5 @@
+     else
+     {
+-        draw_sprite(sprite_index, 4 + ((current_time div 100) % 4), x, y);
++        draw_sprite(sprite_index, 4 + ((scrCurrentTime() div 100) % 4), x, y);
+     }
+ }
+--- original/gml_Object_o45__pAsimov_Draw_0.gml
++++ patched/gml_Object_o45__pAsimov_Draw_0.gml
+@@ -25,5 +25,5 @@
+         if (chargeCount == chargeCountMax)
+         {
+-            if (((current_time div 100) % 2) == 0)
++            if (((scrCurrentTime() div 100) % 2) == 0)
+             {
+                 scrSpriteColored(sprite_index, image_index, x, y, xscale, image_yscale, global.palette[18]);
+--- original/gml_Object_o45_aCat_Step_0.gml
++++ patched/gml_Object_o45_aCat_Step_0.gml
+@@ -8,5 +8,5 @@
+         hspd = sign(hspd) * 3;
+     }
+-    y = ystart - abs(lengthdir_x(4, current_time * 0.8));
++    y = ystart - abs(lengthdir_x(4, scrCurrentTime() * 0.8));
+     if (y > yprevious)
+     {
+--- original/gml_Object_o45_eHawk_Step_0.gml
++++ patched/gml_Object_o45_eHawk_Step_0.gml
+@@ -145,5 +145,5 @@
+     frame = -1;
+     var _t = o45_guin_AsimovTop;
+-    var _d = 48 + lengthdir_x(2, current_time div 10);
++    var _d = 48 + lengthdir_x(2, scrCurrentTime() div 10);
+     if (instance_exists(_t))
+     {
+--- original/gml_Object_o45_eJetpacker_Step_0.gml
++++ patched/gml_Object_o45_eJetpacker_Step_0.gml
+@@ -66,5 +66,5 @@
+     if (thrownCount > 60)
+     {
+-        y = lerp(y, ystart + lengthdir_x(16, current_time * 0.2), 0.2);
++        y = lerp(y, ystart + lengthdir_x(16, scrCurrentTime() * 0.2), 0.2);
+     }
+     image_index = approach(image_index, 1 - (sign(x - o45__pAsimov.x) * (abs(x - o45__pAsimov.x) > 24)), 0.1);
+@@ -74,5 +74,5 @@
+     if (thrownCount > 60)
+     {
+-        y = lerp(y, ystart + lengthdir_x(16, current_time * 0.2), 0.2);
++        y = lerp(y, ystart + lengthdir_x(16, scrCurrentTime() * 0.2), 0.2);
+     }
+     if (moveCount > 0)
+--- original/gml_Object_o45_eShotFront_Draw_0.gml
++++ patched/gml_Object_o45_eShotFront_Draw_0.gml
+@@ -1,3 +1,3 @@
+-if (((current_time div 60) % 2) == 0)
++if (((scrCurrentTime() div 60) % 2) == 0)
+ {
+     draw_sprite(s45_Shadow, 0, x, y + z);
+--- original/gml_Object_o45_hux_roadDebris_Draw_0.gml
++++ patched/gml_Object_o45_hux_roadDebris_Draw_0.gml
+@@ -1,3 +1,3 @@
+-if (((current_time div 20) % 2) == 0)
++if (((scrCurrentTime() div 20) % 2) == 0)
+ {
+     draw_sprite(s45_Shadow, 0, x, y);
+--- original/gml_Object_o45_hux_roadDebris_Step_0.gml
++++ patched/gml_Object_o45_hux_roadDebris_Step_0.gml
+@@ -45,5 +45,5 @@
+             instance_destroy();
+         }
+-        else if (((current_time div 2) % 10) == 0)
++        else if (((scrCurrentTime() div 2) % 10) == 0)
+         {
+             image_angle -= 90;
+--- original/gml_Object_o45_rescueEntity_Draw_0.gml
++++ patched/gml_Object_o45_rescueEntity_Draw_0.gml
+@@ -10,5 +10,5 @@
+ var _mox = camera_get_view_x(view_get_camera(0)) + (4.5 * TILE_SIZE);
+ var _moy = camera_get_view_y(view_get_camera(0));
+-if (asleep > 0 && ((current_time div 50) % 20) < 10 && hp > 0)
++if (asleep > 0 && ((scrCurrentTime() div 50) % 20) < 10 && hp > 0)
+ {
+     draw_sprite_ext(sprite_index, RESCUE.SPRITE_RESCUE_ZZZ + min(asleep, 3), _mox + (lerp(xprevious, x, 0.5) * TILE_SIZE) + (TILE_SIZE * 0.5) + xoffset, ((_moy + (lerp(yprevious, y, 0.5) * TILE_SIZE)) - 4) + yoffset, image_xscale, 1, 0, c_white, 1);
+@@ -20,5 +20,5 @@
+ if (type == UnknownEnum.Value_1 || type == UnknownEnum.Value_9)
+ {
+-    yoffset = lengthdir_y(2, current_time * 0.1);
++    yoffset = lengthdir_y(2, scrCurrentTime() * 0.1);
+     xoffset = 0;
+ }
+--- original/gml_Object_o45_rescueEntity_Step_0.gml
++++ patched/gml_Object_o45_rescueEntity_Step_0.gml
+@@ -69,5 +69,5 @@
+ {
+     xoffset = lerp((xstart - x) * 16, 0, clamp(interp, 0, 1));
+-    yoffset = lerp((ystart - y) * 16, lengthdir_y(2 * (asleep == 0), current_time * 0.2) - (2 * (asleep == 0)), clamp(interp, 0, 1)) + lengthdir_y(32, 180 * clamp(interp, 0, 1));
++    yoffset = lerp((ystart - y) * 16, lengthdir_y(2 * (asleep == 0), scrCurrentTime() * 0.2) - (2 * (asleep == 0)), clamp(interp, 0, 1)) + lengthdir_y(32, 180 * clamp(interp, 0, 1));
+     interp = min(interp + 0.03, 1);
+ }
 --- original/gml_Object_oFFrame_Other_5.gml
 +++ patched/gml_Object_oFFrame_Other_5.gml
 @@ -1,2 +1,2 @@
