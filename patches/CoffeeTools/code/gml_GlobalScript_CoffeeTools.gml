@@ -746,34 +746,37 @@ function savestateSlot(writeSavestate, slotNumber)
                             return true;
                         };
                     }
-                    with(o45__Game) //Cyber Owls master's missionStatus struct
+                    if(instance_exists(o45__Game)) //Cyber Owls master's missionStatus struct
                     {
-                        missionStatus.get_done = function(arg0)
+                        with(o45__Game.missionStatus)
                         {
-                            return struct_get(self, arg0).won && !struct_get(self, arg0).captured;
-                        };
-                        
-                        missionStatus.get_finished_count = function()
-                        {
-                            return get_done("octavio") + get_done("engle") + get_done("guin") + get_done("huxley");
-                        };
-                        
-                        missionStatus.get_lowest_finished = function()
-                        {
-                            if (!get_done("octavio"))
-                                return 0;
+                            get_done = function(arg0)
+                            {
+                                return struct_get(self, arg0).won && !struct_get(self, arg0).captured;
+                            };
                             
-                            if (!get_done("engle"))
-                                return 1;
+                            get_finished_count = function()
+                            {
+                                return get_done("octavio") + get_done("engle") + get_done("guin") + get_done("huxley");
+                            };
                             
-                            if (!get_done("guin"))
-                                return 2;
-                            
-                            if (!get_done("huxley"))
-                                return 3;
-                            
-                            return 4;
-                        };
+                            get_lowest_finished = function()
+                            {
+                                if (!get_done("octavio"))
+                                    return 0;
+                                
+                                if (!get_done("engle"))
+                                    return 1;
+                                
+                                if (!get_done("guin"))
+                                    return 2;
+                                
+                                if (!get_done("huxley"))
+                                    return 3;
+                                
+                                return 4;
+                            };
+                        }
                     }
                     with(o46_Mas) //Caramel Caramel master
                     {

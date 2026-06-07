@@ -242,6 +242,185 @@
 +    global.rng_display_count_prev = 0;
      scrRandomize(0);
  }
+--- original/gml_GlobalScript_scrInputClear.gml
++++ patched/gml_GlobalScript_scrInputClear.gml
+@@ -25,11 +25,3 @@
+         }
+     }
+-    if (global.paused)
+-    {
+-        keyboard_clear(vk_enter);
+-        keyboard_clear(vk_up);
+-        keyboard_clear(vk_down);
+-        keyboard_clear(vk_left);
+-        keyboard_clear(vk_right);
+-    }
+ }
+--- original/gml_GlobalScript_scrInputClearButtons.gml
++++ patched/gml_GlobalScript_scrInputClearButtons.gml
+@@ -16,7 +16,3 @@
+     pressRight = false;
+     pressStart = false;
+-    if (global.paused)
+-    {
+-        keyboard_clear(vk_enter);
+-    }
+ }
+--- original/gml_GlobalScript_scrMenuNavigation.gml
++++ patched/gml_GlobalScript_scrMenuNavigation.gml
+@@ -10,5 +10,5 @@
+     }
+     var _startSel = menuSel;
+-    if (keyboard_check_pressed(vk_up))
++    if (pressUp)
+     {
+         do
+@@ -22,28 +22,4 @@
+         until (itemSelectable[menuSel]);
+     }
+-    else if (keyboard_check_pressed(vk_down))
+-    {
+-        do
+-        {
+-            menuSel++;
+-            if (menuSel > menuSelBot)
+-            {
+-                menuSel = 0;
+-            }
+-        }
+-        until (itemSelectable[menuSel]);
+-    }
+-    else if (pressUp)
+-    {
+-        do
+-        {
+-            menuSel--;
+-            if (menuSel < 0)
+-            {
+-                menuSel = menuSelBot;
+-            }
+-        }
+-        until (itemSelectable[menuSel]);
+-    }
+     else if (pressDown)
+     {
+@@ -81,35 +57,9 @@
+         var _left = false;
+         var _right = false;
+-        if (keyboard_check_pressed(vk_left) && _numItems > 1)
++        if (pressLeft && _numItems > 1)
+         {
+             arrowLeftActive = arrowActiveMax;
+             _left = true;
+         }
+-        else if (pressLeft && _numItems > 1)
+-        {
+-            arrowLeftActive = arrowActiveMax;
+-            _left = true;
+-        }
+-        else if (keyboard_check_pressed(vk_enter))
+-        {
+-            itemIndex[menuSel]++;
+-            if (itemIndex[menuSel] > (array_length(itemValues[menuSel]) - 1))
+-            {
+-                if (itemType[menuSel] == TYPE_METER)
+-                {
+-                    itemIndex[menuSel] = array_length(itemValues[menuSel]) - 1;
+-                }
+-                else
+-                {
+-                    itemIndex[menuSel] = 0;
+-                }
+-            }
+-            return itemIndex[menuSel];
+-        }
+-        else if (keyboard_check_pressed(vk_right))
+-        {
+-            arrowRightActive = arrowActiveMax;
+-            _right = true;
+-        }
+         else if ((pressRight && _numItems > 1) || fire2pressed)
+         {
+@@ -156,22 +106,6 @@
+     if (itemType[menuSel] == TYPE_DUAL_KEY || itemType[menuSel] == TYPE_DUAL_JOY || itemType[menuSel] == TYPE_DUAL_DETECT)
+     {
+-        if (keyboard_check_pressed(vk_enter))
++        if (fire2pressed)
+         {
+-            itemIndex[menuSel]++;
+-            if (itemIndex[menuSel] > (array_length(itemValues[menuSel]) - 1))
+-            {
+-                if (itemType[menuSel] == TYPE_METER)
+-                {
+-                    itemIndex[menuSel] = array_length(itemValues[menuSel]) - 1;
+-                }
+-                else
+-                {
+-                    itemIndex[menuSel] = 0;
+-                }
+-            }
+-            return itemIndex[menuSel];
+-        }
+-        else if (fire2pressed)
+-        {
+             if (pressRight)
+             {
+@@ -195,19 +129,6 @@
+     else if (itemType[menuSel] == TYPE_PLAYER)
+     {
+-        if (keyboard_check_pressed(vk_left) || keyboard_check_pressed(vk_right) || keyboard_check_pressed(vk_enter))
++        if (pressLeft || pressRight || fire2pressed)
+         {
+-            if (keyboard_check_pressed(vk_left))
+-            {
+-                arrowLefttActive = arrowActiveMax;
+-            }
+-            if (keyboard_check_pressed(vk_right))
+-            {
+-                arrowRightActive = arrowActiveMax;
+-            }
+-            itemIndex[menuSel] = !itemIndex[menuSel];
+-            return itemIndex[menuSel];
+-        }
+-        else if (pressLeft || pressRight || fire2pressed)
+-        {
+             if (pressLeft)
+             {
+@@ -224,22 +145,13 @@
+     else if (itemType[menuSel] == TYPE_SINGLE)
+     {
+-        if (keyboard_check_pressed(vk_enter))
++        if (fire2pressed)
+         {
+             return itemIndex[menuSel];
+         }
+-        else if (fire2pressed)
+-        {
+-            return itemIndex[menuSel];
+         }
+-    }
+     else if (itemType[menuSel] == TYPE_SINGLE_CONFIRM)
+     {
+         if (seekingConfirmation)
+         {
+-            if (keyboard_check_pressed(vk_enter))
+-            {
+-                seekingConfirmation = false;
+-                return itemIndex[menuSel];
+-            }
+             if (fire2pressed)
+             {
+@@ -247,10 +159,4 @@
+                 return itemIndex[menuSel];
+             }
+-        }
+-        else if (keyboard_check_pressed(vk_enter))
+-        {
+-            scrSfxLibrary(soundWarn[currentSoundSet]);
+-            seekingConfirmation = true;
+-            return -1;
+         }
+         else if (fire2pressed)
 --- original/gml_GlobalScript_scrPause.gml
 +++ patched/gml_GlobalScript_scrPause.gml
 @@ -7,5 +7,5 @@
@@ -815,6 +994,20 @@
 +    yoffset = lerp((ystart - y) * 16, lengthdir_y(2 * (asleep == 0), scrCurrentTime() * 0.2) - (2 * (asleep == 0)), clamp(interp, 0, 1)) + lengthdir_y(32, 180 * clamp(interp, 0, 1));
      interp = min(interp + 0.03, 1);
  }
+--- original/gml_Object_oConfirm_Step_1.gml
++++ patched/gml_Object_oConfirm_Step_1.gml
+@@ -12,9 +12,9 @@
+     exit;
+ }
+-if (pressLeft || pressRight || keyboard_check_pressed(vk_left) || keyboard_check_pressed(vk_right))
++if (pressLeft || pressRight)
+ {
+     sel = !sel;
+ }
+-if (fire2pressed || keyboard_check_pressed(vk_enter))
++if (fire2pressed)
+ {
+     choice = !sel;
 --- original/gml_Object_oFFrame_Other_5.gml
 +++ patched/gml_Object_oFFrame_Other_5.gml
 @@ -1,2 +1,2 @@
@@ -873,6 +1066,40 @@
 +    if ((fire2pressed || pressStart) && (INTRO_TIME > 10 || INTRO_SCENE > 1))
      {
          if (INTRO_SCENE < 24)
+--- original/gml_Object_oOkay_Step_0.gml
++++ patched/gml_Object_oOkay_Step_0.gml
+@@ -12,5 +12,5 @@
+     delayInput = false;
+ }
+-if (fire2pressed || keyboard_check_pressed(vk_enter))
++if (fire2pressed)
+ {
+     okay = true;
+--- original/gml_Object_oPauseMenu_Other_12.gml
++++ patched/gml_Object_oPauseMenu_Other_12.gml
+@@ -86,5 +86,5 @@
+     if (stateCounter == 0)
+     {
+-        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]) || keyboard_check_released(vk_enter))
++        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]))
+         {
+             stateCounter = 1;
+--- original/gml_Object_oPauseMenu_Other_13.gml
++++ patched/gml_Object_oPauseMenu_Other_13.gml
+@@ -158,5 +158,5 @@
+     if (stateCounter == 0)
+     {
+-        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]) || keyboard_check_released(vk_enter))
++        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]))
+         {
+             stateCounter = 1;
+@@ -289,5 +289,5 @@
+     if (stateCounter == 0)
+     {
+-        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]) || keyboard_check_released(vk_enter))
++        if (keyboard_check_released(global.keyMap[0][5]) || keyboard_check_released(global.keyMap[1][5]) || gamepad_button_check_released(global.joySlot[0], global.joyMap[0][5]) || gamepad_button_check_released(global.joySlot[1], global.joyMap[1][5]))
+         {
+             stateCounter = 1;
 --- original/gml_Object_oScreenHandler_Create_0.gml
 +++ patched/gml_Object_oScreenHandler_Create_0.gml
 @@ -31,2 +31,67 @@
